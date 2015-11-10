@@ -8,8 +8,6 @@ Path = require("path");
 
 log = require("lotus-log");
 
-require("lotus-repl");
-
 File = null;
 
 initFile = null;

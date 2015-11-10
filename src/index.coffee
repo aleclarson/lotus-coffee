@@ -1,14 +1,12 @@
 
 # TODO: On startup, remove '.js' files that have no associated '.coffee' file.
 # TODO: Compile files on startup if they are newer than their destinations.
-# TODO: Make a CLI tool for compiling whole projects.
 
 lotus = require "lotus-require"
+
 { sync, async } = require "io"
 Path = require "path"
 log = require "lotus-log"
-
-require "lotus-repl"
 
 # These are lazy-loaded due to a circular dependency.
 File = null

@@ -67,11 +67,10 @@ module.exports = (file, options) ->
       log.moat 1
 
     # TODO: Delete only the removed dependencies. (6/23/15)
-    for module in dest.dependencies
+    for modulePath, module of dest.dependencies
       delete module.dependers[dest.path]
 
-    dest.dependencies = []
-
+    dest.dependencies = {}
     dest._parseDeps js
 
   .fail async.catch

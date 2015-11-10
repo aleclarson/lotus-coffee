@@ -8,5 +8,5 @@ module.exports = (file) ->
 
 _getFileDest = (file) ->
   name = Path.basename file.path, Path.extname file.path
-  dir = Path.basename Path.dirname file.path
+  dir = Path.relative file.module.path, Path.dirname file.path
   Path.join file.module.path, "js", dir, name + ".js"

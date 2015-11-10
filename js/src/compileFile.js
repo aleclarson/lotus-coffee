@@ -37,7 +37,7 @@ module.exports = function(file, options) {
     });
   }
   return async.read(file.path).then(function(contents) {
-    var compiled, dest, error, i, js, len, map, module, ref2;
+    var compiled, dest, error, js, map, module, modulePath, ref2;
     try {
       compiled = CS.compile(contents, compileOptions);
     } catch (_error) {
@@ -69,11 +69,11 @@ module.exports = function(file, options) {
       log.moat(1);
     }
     ref2 = dest.dependencies;
-    for (i = 0, len = ref2.length; i < len; i++) {
-      module = ref2[i];
+    for (modulePath in ref2) {
+      module = ref2[modulePath];
       delete module.dependers[dest.path];
     }
-    dest.dependencies = [];
+    dest.dependencies = {};
     return dest._parseDeps(js);
   }).fail(async["catch"]);
 };
