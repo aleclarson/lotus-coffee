@@ -27,16 +27,31 @@ module.exports = (module, options) ->
 ##
 
 _watchFiles = (dir, module, options) ->
-  module._watchFiles
-    pattern: options[dir] or (dir + "/**/*.coffee")
-    onReady: initFile
-    onSave: (file) -> compileFile file, options
-    onDelete: _removeFile
 
-_removeFile = (file) ->
-  sync.remove file.dest
+  pattern = options[dir] or (dir + "/**/*.coffee")
 
-_createReadyHandler = (dir) -> (result) ->
-  async.each result.files, (file) ->
-    return
-  .done()
+  module.watch pattern
+
+  Module.watch module.path + "/" + pattern, (file, event) ->
+
+    _alertEvent event, file.path
+    _initFile file
+
+    if event is "unlink"
+      sync.remove file.dest
+      sync.remove file.mapDest
+
+    else
+      _compileFile file, options
+
+    _alertEvent event, file.dest
+
+    if options.sourceMap isnt no
+      _alertEvent event, file.mapDest
+
+_alertEvent = (event, path) ->
+  log
+    .moat 1
+    .white event, " "
+    .yellow relative process.cwd(), path
+    .moat 1

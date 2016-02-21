@@ -17,7 +17,7 @@ CS = require("coffee-script");
 File = require("lotus/file");
 
 module.exports = function(file, options) {
-  var compileOptions, fileName, generatedFile, lastModified, mapPath, sourceFiles, sourceRoot;
+  var compileOptions, fileName, generatedFile, lastContents, lastModified, mapPath, sourceFiles, sourceRoot;
   lastModified = new Date;
   fileName = Path.basename(file.path, Path.extname(file.path));
   compileOptions = {
@@ -36,7 +36,10 @@ module.exports = function(file, options) {
       generatedFile: generatedFile
     });
   }
-  return async.read(file.path).then(function(contents) {
+  lastContents = file.contents;
+  return file.read({
+    force: true
+  }).then(function(contents) {
     var compiled, dest, error, js, map, module, modulePath, ref2;
     try {
       compiled = CS.compile(contents, compileOptions);

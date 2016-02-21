@@ -4,6 +4,7 @@ lotus = require "lotus-require"
 { sync, async } = require "io"
 { log, color } = require "lotus-log"
 { isType } = require "type-utils"
+
 combine = require "combine"
 Path = require "path"
 CS = require "coffee-script"
@@ -28,7 +29,9 @@ module.exports = (file, options) ->
     generatedFile = fileName + ".js"
     combine compileOptions, { sourceRoot, sourceFiles, generatedFile }
 
-  async.read file.path
+  lastContents = file.contents
+
+  file.read { force: yes }
 
   .then (contents) ->
 

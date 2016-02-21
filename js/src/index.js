@@ -1,45 +1,43 @@
-var File, Path, _createReadyHandler, _removeFile, _watchFiles, async, compileFile, initFile, log, lotus, ref, sync;
+var _alertEvent, _compileFile, _initFile, _watchFiles, async, log, lotus, ref, relative, sync;
 
 lotus = require("lotus-require");
 
 ref = require("io"), sync = ref.sync, async = ref.async;
 
-Path = require("path");
+relative = require("path").relative;
 
 log = require("lotus-log");
 
-File = null;
-
-initFile = null;
-
-compileFile = null;
-
 module.exports = function(module, options) {
-  File = require("lotus/file");
-  initFile = require("./initFile");
-  compileFile = require("./compileFile");
   return async.all([_watchFiles("src", module, options), _watchFiles("spec", module, options)]);
 };
 
+_initFile = require("./initFile");
+
+_compileFile = require("./compileFile");
+
 _watchFiles = function(dir, module, options) {
-  return module._watchFiles({
-    pattern: options[dir] || (dir + "/**/*.coffee"),
-    onReady: initFile,
-    onSave: function(file) {
-      return compileFile(file, options);
-    },
-    onDelete: _removeFile
+  var pattern;
+  pattern = options[dir] || (dir + "/**/*.coffee");
+  module.watch(pattern);
+  return Module.watch(module.path + "/" + pattern, function(file, event) {
+    _alertEvent(event, file.path);
+    _initFile(file);
+    if (event === "unlink") {
+      sync.remove(file.dest);
+      sync.remove(file.mapDest);
+    } else {
+      _compileFile(file, options);
+    }
+    _alertEvent(event, file.dest);
+    if (options.sourceMap !== false) {
+      return _alertEvent(event, file.mapDest);
+    }
   });
 };
 
-_removeFile = function(file) {
-  return sync.remove(file.dest);
-};
-
-_createReadyHandler = function(dir) {
-  return function(result) {
-    return async.each(result.files, function(file) {}).done();
-  };
+_alertEvent = function(event, path) {
+  return log.moat(1).white(event, " ").yellow(relative(process.cwd(), path)).moat(1);
 };
 
 //# sourceMappingURL=../../map/src/index.map
