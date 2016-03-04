@@ -1,20 +1,17 @@
-var _getFileDest, _getMapDest, join;
+var Path, _getFileDest;
 
-join = require("path").join;
+Path = require("path");
 
 module.exports = function(file) {
-  if (file.dest == null) {
-    file.dest = _getFileDest(file);
-  }
-  return file.mapDest != null ? file.mapDest : file.mapDest = _getMapDest(file);
+  file.contents = null;
+  return file.dest = _getFileDest(file);
 };
 
 _getFileDest = function(file) {
-  return join(file.module.path, "js", file.dir, file.name + ".js");
-};
-
-_getMapDest = function(file) {
-  return join(file.module.path, "map", file.dir, file.name + ".map");
+  var dir, name;
+  name = Path.basename(file.path, Path.extname(file.path));
+  dir = Path.relative(file.module.path, Path.dirname(file.path));
+  return Path.join(file.module.path, "js", dir, name + ".js");
 };
 
 //# sourceMappingURL=../../map/src/initFile.map

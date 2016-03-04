@@ -8,14 +8,16 @@ File = require "lotus/file"
 glob = require "globby"
 Path = require "path"
 
-initFile = require "./initFile"
-compileFile = require "./compileFile"
+_initFile = require "./initFile"
+_compileFile = require "./compileFile"
 
 ####################################
 
 args = process.argv.slice 3
 
 dir = Path.resolve args[0]
+
+Module.pluginsEnabled = no
 
 module = Module Path.basename dir
 
@@ -31,9 +33,9 @@ async.all sync.map files, (file) ->
 
   file = File file, module
 
-  initFile file
+  _initFile file
 
-  compileFile file, process.options
+  _compileFile file, process.options
 
 .then ->
 

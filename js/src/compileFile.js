@@ -1,6 +1,6 @@
-var CS, File, Path, _printCompilerError, async, color, combine, isType, log, lotus, ref, ref1, sync;
+var CS, Lotus, Path, _printCompilerError, async, color, combine, isType, log, ref, ref1, sync;
 
-lotus = require("lotus-require");
+Lotus = require("lotus");
 
 ref = require("io"), sync = ref.sync, async = ref.async;
 
@@ -13,8 +13,6 @@ combine = require("combine");
 Path = require("path");
 
 CS = require("coffee-script");
-
-File = require("lotus/file");
 
 module.exports = function(file, options) {
   var compileOptions, fileName, generatedFile, lastContents, lastModified, mapPath, sourceFiles, sourceRoot;
@@ -52,25 +50,14 @@ module.exports = function(file, options) {
     }
     js = compiled.js;
     map = compiled.v3SourceMap;
-    dest = File(file.dest, file.module);
+    dest = Lotus.File(file.dest, file.module);
     dest.lastModified = lastModified;
     if (isType(map, String)) {
+      file.mapDest = mapPath;
       sync.write(mapPath, map);
-      if (process.cli == null) {
-        log.origin("lotus-coffee");
-        log.cyan("changed ");
-        log.yellow(Path.relative(lotus.path, mapPath));
-        log.moat(1);
-      }
       js += log.ln + "//# sourceMappingURL=" + Path.relative(Path.dirname(dest.path), mapPath) + log.ln;
     }
     sync.write(dest.path, js);
-    if (process.cli != null) {
-      log.origin("lotus-coffee");
-      log.cyan("compiled ");
-      log.yellow(Path.relative(lotus.path, file.path));
-      log.moat(1);
-    }
     ref2 = dest.dependencies;
     for (modulePath in ref2) {
       module = ref2[modulePath];
@@ -78,7 +65,7 @@ module.exports = function(file, options) {
     }
     dest.dependencies = {};
     return dest._parseDeps(js);
-  }).fail(async["catch"]);
+  });
 };
 
 _printCompilerError = function(error, filename) {

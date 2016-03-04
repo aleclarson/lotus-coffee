@@ -1,20 +1,20 @@
-var _alertEvent, _compileFile, _initFile, _watchFiles, async, log, lotus, ref, relative, sync;
+var Path, _alertEvent, _compileFile, _initFile, _watchFiles, async, log, ref, sync;
 
-lotus = require("lotus-require");
+require("lotus-require");
 
 ref = require("io"), sync = ref.sync, async = ref.async;
 
-relative = require("path").relative;
+Path = require("path");
 
 log = require("lotus-log");
-
-module.exports = function(module, options) {
-  return async.all([_watchFiles("src", module, options), _watchFiles("spec", module, options)]);
-};
 
 _initFile = require("./initFile");
 
 _compileFile = require("./compileFile");
+
+module.exports = function(module, options) {
+  return async.all([_watchFiles("src", module, options), _watchFiles("spec", module, options)]);
+};
 
 _watchFiles = function(dir, module, options) {
   var pattern;
@@ -25,19 +25,24 @@ _watchFiles = function(dir, module, options) {
     _initFile(file);
     if (event === "unlink") {
       sync.remove(file.dest);
-      sync.remove(file.mapDest);
+      _alertEvent(event, file.dest);
+      if (file.mapDest != null) {
+        sync.remove(file.mapDest);
+        return _alertEvent(event, file.mapDest);
+      }
     } else {
-      _compileFile(file, options);
-    }
-    _alertEvent(event, file.dest);
-    if (options.sourceMap !== false) {
-      return _alertEvent(event, file.mapDest);
+      return _compileFile(file, options).then(function() {
+        _alertEvent(event, file.dest);
+        if (file.mapDest != null) {
+          return _alertEvent(event, file.mapDest);
+        }
+      });
     }
   });
 };
 
 _alertEvent = function(event, path) {
-  return log.moat(1).white(event, " ").yellow(relative(process.cwd(), path)).moat(1);
+  return log.moat(1).white(event, " ").yellow(Path.relative(process.cwd(), path)).moat(1);
 };
 
 //# sourceMappingURL=../../map/src/index.map

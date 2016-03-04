@@ -1,4 +1,4 @@
-var File, Module, Path, args, async, compileFile, dir, files, glob, initFile, log, module, ref, startTime, sync;
+var File, Module, Path, _compileFile, _initFile, args, async, dir, files, glob, log, module, ref, startTime, sync;
 
 require("lotus-require");
 
@@ -14,13 +14,15 @@ glob = require("globby");
 
 Path = require("path");
 
-initFile = require("./initFile");
+_initFile = require("./initFile");
 
-compileFile = require("./compileFile");
+_compileFile = require("./compileFile");
 
 args = process.argv.slice(3);
 
 dir = Path.resolve(args[0]);
+
+Module.pluginsEnabled = false;
 
 module = Module(Path.basename(dir));
 
@@ -38,8 +40,8 @@ log.moat(1);
 
 async.all(sync.map(files, function(file) {
   file = File(file, module);
-  initFile(file);
-  return compileFile(file, process.options);
+  _initFile(file);
+  return _compileFile(file, process.options);
 })).then(function() {
   log.moat(1);
   log("Successfully compiled " + files.length + " files ");

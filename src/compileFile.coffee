@@ -1,5 +1,5 @@
 
-lotus = require "lotus-require"
+Lotus = require "lotus"
 
 { sync, async } = require "io"
 { log, color } = require "lotus-log"
@@ -8,8 +8,6 @@ lotus = require "lotus-require"
 combine = require "combine"
 Path = require "path"
 CS = require "coffee-script"
-
-File = require "lotus/file"
 
 module.exports = (file, options) ->
 
@@ -45,29 +43,19 @@ module.exports = (file, options) ->
 
     map = compiled.v3SourceMap
 
-    dest = File file.dest, file.module
+    dest = Lotus.File file.dest, file.module
 
     dest.lastModified = lastModified
 
     if isType map, String
 
-      sync.write mapPath, map
+      file.mapDest = mapPath
 
-      if not process.cli?
-        log.origin "lotus-coffee"
-        log.cyan "changed "
-        log.yellow Path.relative lotus.path, mapPath
-        log.moat 1
+      sync.write mapPath, map
 
       js += log.ln + "//# sourceMappingURL=" + Path.relative(Path.dirname(dest.path), mapPath) + log.ln
 
     sync.write dest.path, js
-
-    if process.cli?
-      log.origin "lotus-coffee"
-      log.cyan "compiled "
-      log.yellow Path.relative lotus.path, file.path
-      log.moat 1
 
     # TODO: Delete only the removed dependencies. (6/23/15)
     for modulePath, module of dest.dependencies
@@ -75,9 +63,6 @@ module.exports = (file, options) ->
 
     dest.dependencies = {}
     dest._parseDeps js
-
-  .fail async.catch
-
 
 _printCompilerError = (error, filename) ->
 
