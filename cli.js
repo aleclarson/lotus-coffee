@@ -1,8 +1,4 @@
 
-module.exports = function (commands, options) {
-  commands.coffee = function () {
-    process.cli = true
-    process.options = options
-    require("./js/src/cli")
-  }
+module.exports = function (commands) {
+  commands.coffee = __dirname + "/js/src/cli";
 }

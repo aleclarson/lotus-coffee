@@ -16,11 +16,14 @@ CS = require("coffee-script");
 
 module.exports = function(file, options) {
   var compileOptions, fileName, generatedFile, lastContents, lastModified, mapPath, sourceFiles, sourceRoot;
+  if (options == null) {
+    options = {};
+  }
   lastModified = new Date;
   fileName = Path.basename(file.path, Path.extname(file.path));
   compileOptions = {
-    bare: options.bare || true,
-    sourceMap: options.sourceMap || true,
+    bare: options.bare != null ? options.bare : options.bare = true,
+    sourceMap: options.sourceMap != null ? options.sourceMap : options.sourceMap = true,
     filename: file.path
   };
   if (compileOptions.sourceMap) {

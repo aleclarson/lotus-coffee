@@ -9,15 +9,15 @@ combine = require "combine"
 Path = require "path"
 CS = require "coffee-script"
 
-module.exports = (file, options) ->
+module.exports = (file, options = {}) ->
 
   lastModified = new Date
 
   fileName = Path.basename file.path, Path.extname file.path
 
   compileOptions =
-    bare: options.bare or yes
-    sourceMap: options.sourceMap or yes
+    bare: options.bare ?= yes
+    sourceMap: options.sourceMap ?= yes
     filename: file.path
 
   if compileOptions.sourceMap
