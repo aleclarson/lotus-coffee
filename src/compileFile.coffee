@@ -1,11 +1,7 @@
 
-Lotus = require "lotus"
-
-{ sync, async } = require "io"
-{ log, color } = require "lotus-log"
-{ isType } = require "type-utils"
-
+repeatString = require "repeat-string"
 combine = require "combine"
+syncFs = require "io/sync"
 Path = require "path"
 CS = require "coffee-script"
 
@@ -37,13 +33,13 @@ module.exports = (file, options = {}) ->
 
     catch error
       _printCompilerError error, file.path
-      async.throw fatal: no
+      throw error
 
     js = compiled.js
 
     map = compiled.v3SourceMap
 
-    dest = Lotus.File file.dest, file.module
+    dest = lotus.File file.dest, file.module
 
     dest.lastModified = lastModified
 
@@ -51,22 +47,22 @@ module.exports = (file, options = {}) ->
 
       file.mapDest = mapPath
 
-      sync.write mapPath, map
+      syncFs.write mapPath, map
 
       js += log.ln + "//# sourceMappingURL=" + Path.relative(Path.dirname(dest.path), mapPath) + log.ln
 
-    sync.write dest.path, js
+    syncFs.write dest.path, js
 
     # TODO: Delete only the removed dependencies. (6/23/15)
     for modulePath, module of dest.dependencies
       delete module.dependers[dest.path]
 
     dest.dependencies = {}
-    dest._parseDeps js
+    return dest._parseDeps js
 
 _printCompilerError = (error, filename) ->
 
-  label = color.bgRed error.constructor.name
+  label = log.color.red error.constructor.name
   message = error.message
   line = error.location.first_line
   code = error.code.split log.ln
@@ -76,7 +72,55 @@ _printCompilerError = (error, filename) ->
   log.moat 1
   log.withLabel label, message
   log.moat 1
-  log.stack._logLocation line - 1, filename
+  _logLocation line - 1, filename
   log.moat 1
-  log.stack._logOffender code[line], column
+  _logOffender code[line], column
+  log.popIndent()
+
+_logLocation = (lineNumber, filePath, funcName) ->
+
+  log.moat 0
+
+  log.yellow "#{lineNumber}"
+  log repeatString " ", 5 - "#{lineNumber}".length
+
+  if filePath?
+    dirName = Path.dirname filePath
+    dirPath = Path.relative lotus.path, dirName
+    log.green.dim dirPath + "/" if dirName isnt "."
+    log.green Path.basename filePath
+
+  if funcName?
+    log " " if filePath?
+    log.blue.dim "within"
+    log " "
+    log.blue funcName
+
+  log.moat 0
+
+_logOffender = (line, column) ->
+
+  rawLength = line.length
+
+  # Remove spaces from the beginning of the offending line of code.
+  line = line.replace /^\s*/, ""
+
+  # Calculate the position of the ▲ icon.
+  columnIndent = repeatString " ", column + line.length - rawLength
+
+  log.pushIndent log.indent + 5
+
+  hasOverflow = log.process? and
+                log.process.stdout.isTTY and
+                log.indent + line.length > log.process.stdout.columns
+
+  if hasOverflow
+    line = line.slice 0, log.process.stdout.columns - log.indent - 4
+
+  log.moat 0
+  log line
+  log.gray.dim "..." if hasOverflow
+  log log.ln, columnIndent
+  log.red "▲"
+  log.moat 0
   log.popIndent()

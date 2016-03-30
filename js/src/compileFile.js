@@ -1,14 +1,10 @@
-var CS, Lotus, Path, _printCompilerError, async, color, combine, isType, log, ref, ref1, sync;
+var CS, Path, _logLocation, _logOffender, _printCompilerError, combine, repeatString, syncFs;
 
-Lotus = require("lotus");
-
-ref = require("io"), sync = ref.sync, async = ref.async;
-
-ref1 = require("lotus-log"), log = ref1.log, color = ref1.color;
-
-isType = require("type-utils").isType;
+repeatString = require("repeat-string");
 
 combine = require("combine");
+
+syncFs = require("io/sync");
 
 Path = require("path");
 
@@ -41,29 +37,27 @@ module.exports = function(file, options) {
   return file.read({
     force: true
   }).then(function(contents) {
-    var compiled, dest, error, js, map, module, modulePath, ref2;
+    var compiled, dest, error, js, map, module, modulePath, ref;
     try {
       compiled = CS.compile(contents, compileOptions);
     } catch (_error) {
       error = _error;
       _printCompilerError(error, file.path);
-      async["throw"]({
-        fatal: false
-      });
+      throw error;
     }
     js = compiled.js;
     map = compiled.v3SourceMap;
-    dest = Lotus.File(file.dest, file.module);
+    dest = lotus.File(file.dest, file.module);
     dest.lastModified = lastModified;
     if (isType(map, String)) {
       file.mapDest = mapPath;
-      sync.write(mapPath, map);
+      syncFs.write(mapPath, map);
       js += log.ln + "//# sourceMappingURL=" + Path.relative(Path.dirname(dest.path), mapPath) + log.ln;
     }
-    sync.write(dest.path, js);
-    ref2 = dest.dependencies;
-    for (modulePath in ref2) {
-      module = ref2[modulePath];
+    syncFs.write(dest.path, js);
+    ref = dest.dependencies;
+    for (modulePath in ref) {
+      module = ref[modulePath];
       delete module.dependers[dest.path];
     }
     dest.dependencies = {};
@@ -73,7 +67,7 @@ module.exports = function(file, options) {
 
 _printCompilerError = function(error, filename) {
   var code, column, label, line, message;
-  label = color.bgRed(error.constructor.name);
+  label = log.color.red(error.constructor.name);
   message = error.message;
   line = error.location.first_line;
   code = error.code.split(log.ln);
@@ -82,9 +76,54 @@ _printCompilerError = function(error, filename) {
   log.moat(1);
   log.withLabel(label, message);
   log.moat(1);
-  log.stack._logLocation(line - 1, filename);
+  _logLocation(line - 1, filename);
   log.moat(1);
-  log.stack._logOffender(code[line], column);
+  _logOffender(code[line], column);
+  return log.popIndent();
+};
+
+_logLocation = function(lineNumber, filePath, funcName) {
+  var dirName, dirPath;
+  log.moat(0);
+  log.yellow("" + lineNumber);
+  log(repeatString(" ", 5 - ("" + lineNumber).length));
+  if (filePath != null) {
+    dirName = Path.dirname(filePath);
+    dirPath = Path.relative(lotus.path, dirName);
+    if (dirName !== ".") {
+      log.green.dim(dirPath + "/");
+    }
+    log.green(Path.basename(filePath));
+  }
+  if (funcName != null) {
+    if (filePath != null) {
+      log(" ");
+    }
+    log.blue.dim("within");
+    log(" ");
+    log.blue(funcName);
+  }
+  return log.moat(0);
+};
+
+_logOffender = function(line, column) {
+  var columnIndent, hasOverflow, rawLength;
+  rawLength = line.length;
+  line = line.replace(/^\s*/, "");
+  columnIndent = repeatString(" ", column + line.length - rawLength);
+  log.pushIndent(log.indent + 5);
+  hasOverflow = (log.process != null) && log.process.stdout.isTTY && log.indent + line.length > log.process.stdout.columns;
+  if (hasOverflow) {
+    line = line.slice(0, log.process.stdout.columns - log.indent - 4);
+  }
+  log.moat(0);
+  log(line);
+  if (hasOverflow) {
+    log.gray.dim("...");
+  }
+  log(log.ln, columnIndent);
+  log.red("▲");
+  log.moat(0);
   return log.popIndent();
 };
 

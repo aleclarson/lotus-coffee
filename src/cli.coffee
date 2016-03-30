@@ -1,41 +1,48 @@
 
-require "lotus-require"
-
-{ sync, async } = require "io"
-{ log } = require "lotus-log"
-Module = require "lotus/module"
-File = require "lotus/file"
 glob = require "globby"
 Path = require "path"
 
-_initFile = require "./initFile"
-_compileFile = require "./compileFile"
+compileFile = require "./compileFile"
+alertEvent = require "./alertEvent"
+initFile = require "./initFile"
 
-####################################
+modName = process.options._[1] ?= "."
 
-args = process.argv.slice 3
+parentDir = if modName[0] is "." then process.cwd() else lotus.path
 
-dir = Path.resolve args[0]
+modPath = Path.resolve parentDir, modName
 
-Module.pluginsEnabled = no
+modName = Path.basename modPath
 
-module = Module Path.basename dir
+try mod = lotus.Module modName
+catch error
+  log.moat 1
+  log.white "Failed to create Module: "
+  log.red modPath
+  log.moat 0
+  log.gray error.message
+  log.moat 1
+  process.exit()
 
-files = glob.sync dir + "/src/**", nodir: yes
+files = glob.sync modPath + "/src/**", nodir: yes
 
 startTime = Date.now()
 
-log.moat 1
-log.format process.options, "Options: "
-log.moat 1
+module.exports = Q.all sync.map files, (file) ->
 
-async.all sync.map files, (file) ->
+  file = lotus.File file, mod
 
-  file = File file, module
+  initFile file
 
-  _initFile file
+  compileFile file, process.options
 
-  _compileFile file, process.options
+  .then ->
+    alertEvent "change", file.dest
+    alertEvent "change", file.mapDest if file.mapDest?
+
+  .fail (error) ->
+    return if error.constructor.name is "SyntaxError"
+    throw error
 
 .then ->
 
@@ -46,6 +53,4 @@ async.all sync.map files, (file) ->
 
   log.cursor.isHidden = no
 
-  process.exit 0
-
-.done()
+  process.exit()

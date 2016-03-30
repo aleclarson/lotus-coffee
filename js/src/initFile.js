@@ -1,13 +1,13 @@
-var Path, _getFileDest;
+var Path, getFileDest;
 
 Path = require("path");
 
 module.exports = function(file) {
   file.contents = null;
-  return file.dest = _getFileDest(file);
+  return file.dest = getFileDest(file);
 };
 
-_getFileDest = function(file) {
+getFileDest = function(file) {
   var dir, name;
   name = Path.basename(file.path, Path.extname(file.path));
   dir = Path.relative(file.module.path, Path.dirname(file.path));
