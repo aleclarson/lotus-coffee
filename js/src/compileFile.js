@@ -11,7 +11,7 @@ Path = require("path");
 CS = require("coffee-script");
 
 module.exports = function(file, options) {
-  var compileOptions, fileName, generatedFile, lastContents, lastModified, mapPath, sourceFiles, sourceRoot;
+  var compileOptions, fileName, generatedFile, lastModified, mapPath, sourceFiles, sourceRoot;
   if (options == null) {
     options = {};
   }
@@ -33,7 +33,6 @@ module.exports = function(file, options) {
       generatedFile: generatedFile
     });
   }
-  lastContents = file.contents;
   return file.read({
     force: true
   }).then(function(contents) {

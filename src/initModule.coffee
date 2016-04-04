@@ -16,9 +16,10 @@ watchFiles = (dir, module, options) ->
 
   pattern = options[dir] or (dir + "/**/*.coffee")
 
-  lotus.Module.watch module.path + "/" + pattern, (file, event) =>
+  module.crawl pattern, (file, event) ->
 
     alertEvent event, file.path
+
     initFile file
 
     if event is "unlink"
@@ -30,13 +31,15 @@ watchFiles = (dir, module, options) ->
         alertEvent event, file.mapDest
 
     else
+
       compileFile file, options
+
       .then =>
         alertEvent event, file.dest
         alertEvent event, file.mapDest if file.mapDest?
+
       .fail (error) ->
         return if error.constructor.name is "SyntaxError"
         throw error
-      .done()
 
-  module.crawl pattern
+      .done()

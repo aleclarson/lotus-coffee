@@ -23,8 +23,6 @@ module.exports = (file, options = {}) ->
     generatedFile = fileName + ".js"
     combine compileOptions, { sourceRoot, sourceFiles, generatedFile }
 
-  lastContents = file.contents
-
   file.read { force: yes }
 
   .then (contents) ->
