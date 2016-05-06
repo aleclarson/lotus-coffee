@@ -36,11 +36,11 @@ module.exports = function(file, options) {
   return file.read({
     force: true
   }).then(function(contents) {
-    var compiled, dest, error, js, map, module, modulePath, ref;
+    var compiled, dest, error, js, map;
     try {
       compiled = CS.compile(contents, compileOptions);
-    } catch (_error) {
-      error = _error;
+    } catch (error1) {
+      error = error1;
       _printCompilerError(error, file.path);
       throw error;
     }
@@ -53,14 +53,7 @@ module.exports = function(file, options) {
       syncFs.write(mapPath, map);
       js += log.ln + "//# sourceMappingURL=" + Path.relative(Path.dirname(dest.path), mapPath) + log.ln;
     }
-    syncFs.write(dest.path, js);
-    ref = dest.dependencies;
-    for (modulePath in ref) {
-      module = ref[modulePath];
-      delete module.dependers[dest.path];
-    }
-    dest.dependencies = {};
-    return dest._parseDeps(js);
+    return syncFs.write(dest.path, js);
   });
 };
 

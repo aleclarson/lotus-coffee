@@ -20,8 +20,8 @@ modName = Path.basename(modPath);
 
 try {
   mod = lotus.Module(modName);
-} catch (_error) {
-  error = _error;
+} catch (error1) {
+  error = error1;
   log.moat(1);
   log.white("Failed to create Module: ");
   log.red(modPath);

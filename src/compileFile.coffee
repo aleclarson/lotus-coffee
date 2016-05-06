@@ -51,13 +51,6 @@ module.exports = (file, options = {}) ->
 
     syncFs.write dest.path, js
 
-    # TODO: Delete only the removed dependencies. (6/23/15)
-    for modulePath, module of dest.dependencies
-      delete module.dependers[dest.path]
-
-    dest.dependencies = {}
-    return dest._parseDeps js
-
 _printCompilerError = (error, filename) ->
 
   label = log.color.red error.constructor.name
