@@ -1,56 +1,64 @@
 
-glob = require "globby"
+syncFs = require "io/sync"
+globby = require "globby"
+sync = require "sync"
 Path = require "path"
+Q = require "q"
 
-compileFile = require "./compileFile"
-alertEvent = require "./alertEvent"
-initFile = require "./initFile"
+compileFile = require "./helpers/compileFile"
+alertEvent = require "./helpers/alertEvent"
 
-modName = process.options._[1] ?= "."
+module.exports = (options) ->
 
-parentDir = if modName[0] is "." then process.cwd() else lotus.path
+  moduleName = options._.shift() or "."
 
-modPath = Path.resolve parentDir, modName
+  parentDir = if moduleName[0] is "." then process.cwd() else lotus.path
 
-modName = Path.basename modPath
+  modulePath = Path.resolve parentDir, moduleName
 
-try mod = lotus.Module modName
-catch error
-  log.moat 1
-  log.white "Failed to create Module: "
-  log.red modPath
-  log.moat 0
-  log.gray error.message
-  log.moat 1
-  process.exit()
+  moduleName = Path.basename modulePath
 
-files = glob.sync modPath + "/src/**", nodir: yes
+  try mod = lotus.Module moduleName
+  catch error
+    error.catch()
+    log.moat 1
+    log.red "Module error: "
+    log.white modulePath
+    log.moat 0
+    log.gray.dim error.stack
+    log.moat 1
+    process.exit()
 
-startTime = Date.now()
+  if options.refresh
+    syncFs.remove modulePath + "/js"
+    syncFs.remove modulePath + "/map"
 
-module.exports = Q.all sync.map files, (file) ->
+  files = globby.sync modulePath + "/src/**", nodir: yes
 
-  file = lotus.File file, mod
+  startTime = Date.now()
 
-  initFile file
+  Q.all sync.map files, (file) ->
 
-  compileFile file, process.options
+    file = lotus.File file, mod
+
+    compileFile file, options
+
+    .then ->
+      alertEvent "change", file.dest
+      alertEvent "change", file.mapDest if file.mapDest
+
+    .fail (error) ->
+      return if error.constructor.name is "SyntaxError"
+      throw error
 
   .then ->
-    alertEvent "change", file.dest
-    alertEvent "change", file.mapDest if file.mapDest?
 
-  .fail (error) ->
-    return if error.constructor.name is "SyntaxError"
-    throw error
+    log.moat 1
+    log "Successfully compiled #{files.length} files "
+    log.gray "(in #{Date.now() - startTime} ms)"
+    log.moat 1
 
-.then ->
+    log.cursor.isHidden = no
+    process.exit()
 
-  log.moat 1
-  log "Successfully compiled #{files.length} files "
-  log.gray "(in #{Date.now() - startTime} ms)"
-  log.moat 1
-
-  log.cursor.isHidden = no
-
-  process.exit()
+  .done()

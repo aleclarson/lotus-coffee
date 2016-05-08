@@ -6,12 +6,11 @@
   "dependencies": {
     "coffee-script": "aleclarson/coffee-script#1.9.3",
     "combine": "aleclarson/combine#1.0.0",
-    "globby": "^2.1.0",
     "io": "aleclarson/io#1.0.0",
-    "lotus": "aleclarson/lotus#1.0.0",
-    "lotus-log": "aleclarson/lotus-log#1.0.0",
-    "lotus-require": "aleclarson/lotus-require#1.0.0",
-    "type-utils": "aleclarson/type-utils#1.0.0"
+    "sync": "aleclarson/sync#1.0.0",
+    "q": "aleclarson/q#1.0.0",
+    "repeat-string": "aleclarson/repeat-string#1.5.4",
+    "globby": "aleclarson/globby#4.0.0"
   },
   "lotus": {
     "plugins": [

@@ -1,12 +1,15 @@
-module.exports = function() {
-  this.commands.coffee = function() {
-    return require("./cli");
-  };
+exports.globalDependencies = ["lotus-watch"];
+
+exports.initCommands = function() {
   return {
-    initModule: function() {
-      return require("./initModule");
+    coffee: function() {
+      return require("./cli");
     }
   };
+};
+
+exports.initModule = function() {
+  return require("./helpers/initModule");
 };
 
 //# sourceMappingURL=../../map/src/index.map

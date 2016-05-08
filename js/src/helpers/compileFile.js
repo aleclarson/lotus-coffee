@@ -11,26 +11,22 @@ Path = require("path");
 CS = require("coffee-script");
 
 module.exports = function(file, options) {
-  var compileOptions, fileName, generatedFile, lastModified, mapPath, sourceFiles, sourceRoot;
+  var compileOptions, lastModified, mapPath;
   if (options == null) {
     options = {};
   }
   lastModified = new Date;
-  fileName = Path.basename(file.path, Path.extname(file.path));
   compileOptions = {
     bare: options.bare != null ? options.bare : options.bare = true,
     sourceMap: options.sourceMap != null ? options.sourceMap : options.sourceMap = true,
     filename: file.path
   };
   if (compileOptions.sourceMap) {
-    mapPath = Path.join(file.module.path, "map", file.dir, fileName + ".map");
-    sourceRoot = Path.relative(Path.dirname(mapPath), Path.dirname(file.path));
-    sourceFiles = [fileName + ".coffee"];
-    generatedFile = fileName + ".js";
+    mapPath = Path.join(file.module.path, "map", file.dir, file.name + ".map");
     combine(compileOptions, {
-      sourceRoot: sourceRoot,
-      sourceFiles: sourceFiles,
-      generatedFile: generatedFile
+      sourceRoot: Path.relative(Path.dirname(mapPath), Path.dirname(file.path)),
+      sourceFiles: [file.name + ".coffee"],
+      generatedFile: file.name + ".js"
     });
   }
   return file.read({
@@ -119,4 +115,4 @@ _logOffender = function(line, column) {
   return log.popIndent();
 };
 
-//# sourceMappingURL=../../map/src/compileFile.map
+//# sourceMappingURL=../../../map/src/helpers/compileFile.map

@@ -9,19 +9,17 @@ module.exports = (file, options = {}) ->
 
   lastModified = new Date
 
-  fileName = Path.basename file.path, Path.extname file.path
-
   compileOptions =
     bare: options.bare ?= yes
     sourceMap: options.sourceMap ?= yes
     filename: file.path
 
   if compileOptions.sourceMap
-    mapPath = Path.join file.module.path, "map", file.dir, fileName + ".map"
-    sourceRoot = Path.relative Path.dirname(mapPath), Path.dirname(file.path)
-    sourceFiles = [fileName + ".coffee"]
-    generatedFile = fileName + ".js"
-    combine compileOptions, { sourceRoot, sourceFiles, generatedFile }
+    mapPath = Path.join file.module.path, "map", file.dir, file.name + ".map"
+    combine compileOptions,
+      sourceRoot: Path.relative Path.dirname(mapPath), Path.dirname(file.path)
+      sourceFiles: [file.name + ".coffee"]
+      generatedFile: file.name + ".js"
 
   file.read { force: yes }
 
