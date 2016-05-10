@@ -1,14 +1,22 @@
-var CS, Path, _logLocation, _logOffender, _printCompilerError, combine, repeatString, syncFs;
+var Path, _logLocation, _logOffender, _printCompilerError, coffee, combine, repeatString, syncFs;
 
 repeatString = require("repeat-string");
 
 combine = require("combine");
 
+coffee = require("coffee-script");
+
 syncFs = require("io/sync");
 
 Path = require("path");
 
-CS = require("coffee-script");
+log.moat(1);
+
+log.white("coffee.VERSION = ");
+
+log.green(coffee.VERSION);
+
+log.moat(1);
 
 module.exports = function(file, options) {
   var compileOptions, lastModified, mapPath;
@@ -34,7 +42,7 @@ module.exports = function(file, options) {
   }).then(function(contents) {
     var compiled, dest, error, js, map;
     try {
-      compiled = CS.compile(contents, compileOptions);
+      compiled = coffee.compile(contents, compileOptions);
     } catch (error1) {
       error = error1;
       _printCompilerError(error, file.path);

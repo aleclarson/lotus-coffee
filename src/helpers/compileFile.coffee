@@ -1,9 +1,14 @@
 
 repeatString = require "repeat-string"
 combine = require "combine"
+coffee = require "coffee-script"
 syncFs = require "io/sync"
 Path = require "path"
-CS = require "coffee-script"
+
+log.moat 1
+log.white "coffee.VERSION = "
+log.green coffee.VERSION
+log.moat 1
 
 module.exports = (file, options = {}) ->
 
@@ -25,7 +30,7 @@ module.exports = (file, options = {}) ->
 
   .then (contents) ->
 
-    try compiled = CS.compile contents, compileOptions
+    try compiled = coffee.compile contents, compileOptions
 
     catch error
       _printCompilerError error, file.path

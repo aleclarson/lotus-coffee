@@ -10,15 +10,12 @@ alertEvent = require "./helpers/alertEvent"
 
 module.exports = (options) ->
 
-  moduleName = options._.shift() or "."
+  { Module, File } = lotus
 
-  parentDir = if moduleName[0] is "." then process.cwd() else lotus.path
-
-  modulePath = Path.resolve parentDir, moduleName
-
+  modulePath = Module.resolvePath options._.shift() or "."
   moduleName = Path.basename modulePath
 
-  try mod = lotus.Module moduleName
+  try mod = Module moduleName
   catch error
     error.catch()
     log.moat 1
@@ -29,36 +26,59 @@ module.exports = (options) ->
     log.moat 1
     process.exit()
 
+  # Create 'js/src' if it does not exist.
+  unless mod.dest
+    dest = modulePath + "/js/src"
+    unless syncFs.isDir dest
+      syncFs.makeDir dest
+      mod.dest = dest
+
+  # Create 'js/spec' if it does not exist.
+  unless mod.specDest
+    specDest = modulePath + "/js/spec"
+    unless syncFs.isDir specDest
+      syncFs.makeDir specDest
+      mod.specDest = specDest
+
   if options.refresh
     syncFs.remove modulePath + "/js"
     syncFs.remove modulePath + "/map"
 
-  files = globby.sync modulePath + "/src/**", nodir: yes
-
   startTime = Date.now()
+  compiledCount = 0
 
-  Q.all sync.map files, (file) ->
+  globby modulePath + "/{src,spec}/**/*.coffee"
 
-    file = lotus.File file, mod
+  .then (files) ->
 
-    compileFile file, options
+    Q.all sync.map files, (file) ->
+
+      file = File file, mod
+
+      compileFile file, options
+
+      .then ->
+        compiledCount += 1
+        alertEvent "change", file.dest
+        alertEvent "change", file.mapDest if file.mapDest
+
+      .fail (error) ->
+        return if error.constructor.name is "SyntaxError"
+        throw error
 
     .then ->
-      alertEvent "change", file.dest
-      alertEvent "change", file.mapDest if file.mapDest
 
-    .fail (error) ->
-      return if error.constructor.name is "SyntaxError"
-      throw error
+      log.moat 1
+      log.white "Successfully compiled "
+      log.yellow compiledCount
+      log.white " files "
+      log.gray "(in #{Date.now() - startTime} ms)"
+      log.moat 1
+
+  .always ->
+    log.cursor.isHidden = no
 
   .then ->
-
-    log.moat 1
-    log "Successfully compiled #{files.length} files "
-    log.gray "(in #{Date.now() - startTime} ms)"
-    log.moat 1
-
-    log.cursor.isHidden = no
     process.exit()
 
   .done()
