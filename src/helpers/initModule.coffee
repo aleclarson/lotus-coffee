@@ -20,20 +20,15 @@ module.exports = (mod, options) ->
       log.moat 1
       return
 
-    return Q.all [
-      watchFiles "src", mod, options # TODO: Make the directory customizable!
-      watchFiles "spec", mod, options
-    ]
+    patterns = []
+    patterns[0] = "src/**/*.coffee"
+    patterns[1] = "spec/**/*.coffee"
 
-  patterns = []
-  patterns[0] = "src/**/*.coffee"
-  patterns[1] = "spec/**/*.coffee"
-
-  mod.watch patterns,
-    ready: listeners.ready
-    add: listeners.add.bind options
-    change: listeners.change.bind options
-    unlink: listeners.unlink
+    mod.watch patterns,
+      ready: listeners.ready
+      add: listeners.add.bind options
+      change: listeners.change.bind options
+      unlink: listeners.unlink
 
 listeners =
 

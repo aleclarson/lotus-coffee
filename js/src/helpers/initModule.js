@@ -9,8 +9,8 @@ compileFile = require("./compileFile");
 alertEvent = require("./alertEvent");
 
 module.exports = function(mod, options) {
-  var patterns;
-  mod.load(["config"]).then(function() {
+  return mod.load(["config"]).then(function() {
+    var patterns;
     if (!mod.dest) {
       log.moat(1);
       log.yellow("Warning: ");
@@ -20,16 +20,15 @@ module.exports = function(mod, options) {
       log.moat(1);
       return;
     }
-    return Q.all([watchFiles("src", mod, options), watchFiles("spec", mod, options)]);
-  });
-  patterns = [];
-  patterns[0] = "src/**/*.coffee";
-  patterns[1] = "spec/**/*.coffee";
-  return mod.watch(patterns, {
-    ready: listeners.ready,
-    add: listeners.add.bind(options),
-    change: listeners.change.bind(options),
-    unlink: listeners.unlink
+    patterns = [];
+    patterns[0] = "src/**/*.coffee";
+    patterns[1] = "spec/**/*.coffee";
+    return mod.watch(patterns, {
+      ready: listeners.ready,
+      add: listeners.add.bind(options),
+      change: listeners.change.bind(options),
+      unlink: listeners.unlink
+    });
   });
 };
 
