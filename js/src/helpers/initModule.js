@@ -10,7 +10,17 @@ alertEvent = require("./alertEvent");
 
 module.exports = function(mod, options) {
   return mod.load(["config"]).then(function() {
-    var patterns;
+    var dest, patterns, specDest;
+    if (isType(options.dest, String)) {
+      dest = options.dest;
+    } else {
+      dest = "src";
+    }
+    if (isType(options.specDest, String)) {
+      specDest = options.specDest;
+    } else {
+      specDest = "spec";
+    }
     if (!mod.dest) {
       log.moat(1);
       log.yellow("Warning: ");
@@ -21,8 +31,12 @@ module.exports = function(mod, options) {
       return;
     }
     patterns = [];
-    patterns[0] = "src/**/*.coffee";
-    patterns[1] = "spec/**/*.coffee";
+    if (dest) {
+      patterns[0] = dest + "/**/*.coffee";
+    }
+    if (specDest) {
+      patterns[1] = specDest + "/**/*.coffee";
+    }
     return mod.watch(patterns, {
       ready: listeners.ready,
       add: listeners.add.bind(options),
@@ -42,11 +56,12 @@ listeners = {
         return alertEvent(event, file.mapDest);
       }
     }).fail(function(error) {
-      if (error.constructor.name === "SyntaxError") {
-        return;
+      if (error instanceof SyntaxError) {
+        return error.print();
+      } else {
+        throw error;
       }
-      throw error;
-    });
+    }).done();
   },
   change: function(file) {
     alertEvent("change", file.path);
@@ -59,10 +74,15 @@ listeners = {
       if (error.constructor.name === "SyntaxError") {
         return;
       }
+      console.log(error.message);
       throw error;
-    });
+    }).done();
   },
   unlink: function(file) {
+    if (!file.dest) {
+      console.warn("'" + file.path + "' has no compile destination to unlink?");
+      return;
+    }
     syncFs.remove(file.dest);
     alertEvent("unlink", file.path);
     alertEvent("unlink", file.dest);

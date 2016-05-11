@@ -4,57 +4,68 @@ combine = require "combine"
 coffee = require "coffee-script"
 syncFs = require "io/sync"
 Path = require "path"
+Q = require "q"
 
 log.moat 1
 log.white "coffee.VERSION = "
 log.green coffee.VERSION
 log.moat 1
 
-module.exports = (file, options = {}) ->
+module.exports = (file, options) ->
+
+  unless file.dest
+    error = Error "'file.dest' must be defined before compiling!"
+    return Q.reject error
 
   lastModified = new Date
 
-  compileOptions =
-    bare: options.bare ?= yes
-    sourceMap: options.sourceMap ?= yes
-    filename: file.path
+  options ?= {}
+  bare = options.bare ?= yes
+  sourceMap = options.sourceMap ?= yes
 
-  if compileOptions.sourceMap
+  if sourceMap
     mapPath = Path.join file.module.path, "map", file.dir, file.name + ".map"
-    combine compileOptions,
-      sourceRoot: Path.relative Path.dirname(mapPath), Path.dirname(file.path)
-      sourceFiles: [file.name + ".coffee"]
-      generatedFile: file.name + ".js"
+    sourceRoot = Path.relative Path.dirname(mapPath), Path.dirname(file.path)
+    sourceFiles = [file.name + ".coffee"]
+    generatedFile = file.name + ".js"
 
   file.read { force: yes }
 
   .then (contents) ->
+    coffee.compile contents, {
+      filename: file.path
+      sourceRoot
+      sourceFiles
+      generatedFile
+      sourceMap
+      bare
+    }
 
-    try compiled = coffee.compile contents, compileOptions
+  .fail (error) ->
+    if error instanceof SyntaxError
+      error.print = SyntaxError.Printer error
+    throw error
 
-    catch error
-      _printCompilerError error, file.path
-      throw error
-
+  .then (compiled) ->
     js = compiled.js
-
     map = compiled.v3SourceMap
 
     dest = lotus.File file.dest, file.module
-
     dest.lastModified = lastModified
 
     if isType map, String
 
+      js += log.ln + "//# sourceMappingURL=" +
+        Path.relative(Path.dirname(dest.path), mapPath) + log.ln
+
       file.mapDest = mapPath
-
       syncFs.write mapPath, map
-
-      js += log.ln + "//# sourceMappingURL=" + Path.relative(Path.dirname(dest.path), mapPath) + log.ln
+      assert syncFs.read(mapPath) is map, { mapPath, map, reason: "Failed to write '.map' file!" }
 
     syncFs.write dest.path, js
+    assert syncFs.read(dest.path) is js, { jsPath: dest.path, js, reason: "Failed to write '.js' file!" }
 
-_printCompilerError = (error, filename) ->
+SyntaxError.Printer = (error) -> () ->
 
   label = log.color.red error.constructor.name
   message = error.message
@@ -66,12 +77,12 @@ _printCompilerError = (error, filename) ->
   log.moat 1
   log.withLabel label, message
   log.moat 1
-  _logLocation line - 1, filename
+  printLocation line - 1, file.path
   log.moat 1
-  _logOffender code[line], column
+  printOffender code[line], column
   log.popIndent()
 
-_logLocation = (lineNumber, filePath, funcName) ->
+printLocation = (lineNumber, filePath, funcName) ->
 
   log.moat 0
 
@@ -92,7 +103,7 @@ _logLocation = (lineNumber, filePath, funcName) ->
 
   log.moat 0
 
-_logOffender = (line, column) ->
+printOffender = (line, column) ->
 
   rawLength = line.length
 

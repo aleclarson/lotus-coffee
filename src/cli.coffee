@@ -10,7 +10,7 @@ alertEvent = require "./helpers/alertEvent"
 
 module.exports = (options) ->
 
-  { Module, File } = lotus
+  { Module } = lotus
 
   modulePath = Module.resolvePath options._.shift() or "."
   moduleName = Path.basename modulePath
@@ -26,57 +26,80 @@ module.exports = (options) ->
     log.moat 1
     process.exit()
 
-  # Create 'js/src' if it does not exist.
-  unless mod.dest
-    dest = modulePath + "/js/src"
-    unless syncFs.isDir dest
-      syncFs.makeDir dest
+  mod.load [ "config" ]
+
+  .then ->
+
+    config = mod.config["lotus-coffee"] or {}
+
+    # Clear all compiled files, if desired.
+    if options.refresh
+      syncFs.remove modulePath + "/js"
+      syncFs.remove modulePath + "/map"
+
+    # Create 'js/src' if it does not exist.
+    unless mod.dest
+      dest = Path.join modulePath, config.dest or "js/src"
+      syncFs.makeDir dest if not syncFs.isDir dest
       mod.dest = dest
 
-  # Create 'js/spec' if it does not exist.
-  unless mod.specDest
-    specDest = modulePath + "/js/spec"
-    unless syncFs.isDir specDest
-      syncFs.makeDir specDest
+    # Create 'js/spec' if it does not exist.
+    unless mod.specDest
+      specDest = Path.join modulePath, config.specDest or "js/spec"
+      syncFs.makeDir specDest if not syncFs.isDir specDest
       mod.specDest = specDest
 
-  if options.refresh
-    syncFs.remove modulePath + "/js"
-    syncFs.remove modulePath + "/map"
+    if isType config.files, Array
+      files = config.files
+    else if isType mod.config.files, Array
+      files = mod.config.files
+    else
+      files = [ "src", "spec" ]
 
-  startTime = Date.now()
-  compiledCount = 0
+    patterns = sync.map files, (pattern) ->
+      Path.resolve mod.path, pattern + "/**/*.coffee"
 
-  globby modulePath + "/{src,spec}/**/*.coffee"
+    mod.crawl patterns
 
   .then (files) ->
 
-    Q.all sync.map files, (file) ->
+    startTime = Date.now()
+    successCount = 0
 
-      file = File file, mod
+    Q.all sync.map files, (file) ->
 
       compileFile file, options
 
       .then ->
-        compiledCount += 1
+        successCount += 1
         alertEvent "change", file.dest
         alertEvent "change", file.mapDest if file.mapDest
 
       .fail (error) ->
-        return if error.constructor.name is "SyntaxError"
+
+        if error instanceof SyntaxError
+          error.print()
+          return
+
+        if error.message is "'file.dest' must be defined before compiling!"
+          log.moat 1
+          log.yellow "Warning: "
+          log.white file.path
+          log.moat 0
+          log.gray.dim error.message
+          log.moat 1
+          return
+
         throw error
 
     .then ->
-
+      elapsedTime = Date.now() - startTime
       log.moat 1
-      log.white "Successfully compiled "
-      log.yellow compiledCount
-      log.white " files "
-      log.gray "(in #{Date.now() - startTime} ms)"
+      log.gray "Successfully compiled "
+      log.white successCount
+      log.gray " files "
+      log.gray.dim "(in #{elapsedTime} ms)"
       log.moat 1
-
-  .always ->
-    log.cursor.isHidden = no
 
   .then ->
     process.exit()

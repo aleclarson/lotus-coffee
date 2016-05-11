@@ -15,8 +15,8 @@ compileFile = require("./helpers/compileFile");
 alertEvent = require("./helpers/alertEvent");
 
 module.exports = function(options) {
-  var File, Module, compiledCount, dest, error, mod, moduleName, modulePath, specDest, startTime;
-  Module = lotus.Module, File = lotus.File;
+  var Module, error, mod, moduleName, modulePath;
+  Module = lotus.Module;
   modulePath = Module.resolvePath(options._.shift() || ".");
   moduleName = Path.basename(modulePath);
   try {
@@ -32,51 +32,75 @@ module.exports = function(options) {
     log.moat(1);
     process.exit();
   }
-  if (!mod.dest) {
-    dest = modulePath + "/js/src";
-    if (!syncFs.isDir(dest)) {
-      syncFs.makeDir(dest);
+  return mod.load(["config"]).then(function() {
+    var config, dest, files, patterns, specDest;
+    config = mod.config["lotus-coffee"] || {};
+    if (options.refresh) {
+      syncFs.remove(modulePath + "/js");
+      syncFs.remove(modulePath + "/map");
+    }
+    if (!mod.dest) {
+      dest = Path.join(modulePath, config.dest || "js/src");
+      if (!syncFs.isDir(dest)) {
+        syncFs.makeDir(dest);
+      }
       mod.dest = dest;
     }
-  }
-  if (!mod.specDest) {
-    specDest = modulePath + "/js/spec";
-    if (!syncFs.isDir(specDest)) {
-      syncFs.makeDir(specDest);
+    if (!mod.specDest) {
+      specDest = Path.join(modulePath, config.specDest || "js/spec");
+      if (!syncFs.isDir(specDest)) {
+        syncFs.makeDir(specDest);
+      }
       mod.specDest = specDest;
     }
-  }
-  if (options.refresh) {
-    syncFs.remove(modulePath + "/js");
-    syncFs.remove(modulePath + "/map");
-  }
-  startTime = Date.now();
-  compiledCount = 0;
-  return globby(modulePath + "/{src,spec}/**/*.coffee").then(function(files) {
+    if (isType(config.files, Array)) {
+      files = config.files;
+    } else if (isType(mod.config.files, Array)) {
+      files = mod.config.files;
+    } else {
+      files = ["src", "spec"];
+    }
+    patterns = sync.map(files, function(pattern) {
+      return Path.resolve(mod.path, pattern + "/**/*.coffee");
+    });
+    return mod.crawl(patterns);
+  }).then(function(files) {
+    var startTime, successCount;
+    startTime = Date.now();
+    successCount = 0;
     return Q.all(sync.map(files, function(file) {
-      file = File(file, mod);
       return compileFile(file, options).then(function() {
-        compiledCount += 1;
+        successCount += 1;
         alertEvent("change", file.dest);
         if (file.mapDest) {
           return alertEvent("change", file.mapDest);
         }
       }).fail(function(error) {
-        if (error.constructor.name === "SyntaxError") {
+        if (error instanceof SyntaxError) {
+          error.print();
+          return;
+        }
+        if (error.message === "'file.dest' must be defined before compiling!") {
+          log.moat(1);
+          log.yellow("Warning: ");
+          log.white(file.path);
+          log.moat(0);
+          log.gray.dim(error.message);
+          log.moat(1);
           return;
         }
         throw error;
       });
     })).then(function() {
+      var elapsedTime;
+      elapsedTime = Date.now() - startTime;
       log.moat(1);
-      log.white("Successfully compiled ");
-      log.yellow(compiledCount);
-      log.white(" files ");
-      log.gray("(in " + (Date.now() - startTime) + " ms)");
+      log.gray("Successfully compiled ");
+      log.white(successCount);
+      log.gray(" files ");
+      log.gray.dim("(in " + elapsedTime + " ms)");
       return log.moat(1);
     });
-  }).always(function() {
-    return log.cursor.isHidden = false;
   }).then(function() {
     return process.exit();
   }).done();

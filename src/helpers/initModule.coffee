@@ -11,6 +11,16 @@ module.exports = (mod, options) ->
 
   .then ->
 
+    if isType options.dest, String
+      dest = options.dest
+    else
+      dest = "src"
+
+    if isType options.specDest, String
+      specDest = options.specDest
+    else
+      specDest = "spec"
+
     unless mod.dest
       log.moat 1
       log.yellow "Warning: "
@@ -21,8 +31,8 @@ module.exports = (mod, options) ->
       return
 
     patterns = []
-    patterns[0] = "src/**/*.coffee"
-    patterns[1] = "spec/**/*.coffee"
+    patterns[0] = dest + "/**/*.coffee" if dest
+    patterns[1] = specDest + "/**/*.coffee" if specDest
 
     mod.watch patterns,
       ready: listeners.ready
@@ -46,8 +56,11 @@ listeners =
       alertEvent event, file.mapDest if file.mapDest
 
     .fail (error) ->
-      return if error.constructor.name is "SyntaxError"
-      throw error
+      if error instanceof SyntaxError
+        error.print()
+      else throw error
+
+    .done()
 
   change: (file) ->
 
@@ -61,9 +74,15 @@ listeners =
 
     .fail (error) ->
       return if error.constructor.name is "SyntaxError"
+      console.log error.message
       throw error
 
+    .done()
+
   unlink: (file) ->
+    unless file.dest
+      console.warn "'#{file.path}' has no compile destination to unlink?"
+      return
     syncFs.remove file.dest
     alertEvent "unlink", file.path
     alertEvent "unlink", file.dest
