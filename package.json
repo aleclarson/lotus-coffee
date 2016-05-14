@@ -3,17 +3,22 @@
   "version": "1.0.0",
   "main": "js/src/index",
   "dependencies": {
+    "assert": "aleclarson/assert#1.0.0",
     "coffee-script": "aleclarson/coffee-script#1.10.0",
     "combine": "aleclarson/combine#1.0.0",
+    "globby": "aleclarson/globby#4.0.0",
     "io": "aleclarson/io#1.0.0",
-    "sync": "aleclarson/sync#1.0.0",
+    "isType": "aleclarson/isType#1.0.0",
     "q": "aleclarson/q#1.0.0",
     "repeat-string": "aleclarson/repeat-string#1.5.4",
-    "globby": "aleclarson/globby#4.0.0"
+    "sync": "aleclarson/sync#1.0.0"
   },
   "lotus": {
     "plugins": [
       "lotus-coffee"
+    ],
+    "implicitDependencies": [
+      "path"
     ]
   }
 }

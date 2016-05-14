@@ -1,4 +1,4 @@
-var Path, Q, coffee, combine, printLocation, printOffender, repeatString, syncFs;
+var Path, Q, assert, coffee, combine, isType, printLocation, printOffender, repeatString, syncFs;
 
 repeatString = require("repeat-string");
 
@@ -7,6 +7,10 @@ combine = require("combine");
 coffee = require("coffee-script");
 
 syncFs = require("io/sync");
+
+isType = require("isType");
+
+assert = require("assert");
 
 Path = require("path");
 
@@ -51,7 +55,7 @@ module.exports = function(file, options) {
     });
   }).fail(function(error) {
     if (error instanceof SyntaxError) {
-      error.print = SyntaxError.Printer(error);
+      error.print = SyntaxError.Printer(error, file.path);
     }
     throw error;
   }).then(function(compiled) {
@@ -79,7 +83,7 @@ module.exports = function(file, options) {
   });
 };
 
-SyntaxError.Printer = function(error) {
+SyntaxError.Printer = function(error, filePath) {
   return function() {
     var code, column, label, line, message;
     label = log.color.red(error.constructor.name);
@@ -91,7 +95,7 @@ SyntaxError.Printer = function(error) {
     log.moat(1);
     log.withLabel(label, message);
     log.moat(1);
-    printLocation(line - 1, file.path);
+    printLocation(line - 1, filePath);
     log.moat(1);
     printOffender(code[line], column);
     return log.popIndent();
@@ -115,9 +119,9 @@ printLocation = function(lineNumber, filePath, funcName) {
     if (filePath != null) {
       log(" ");
     }
-    log.blue.dim("within");
+    log.cyan.dim("within");
     log(" ");
-    log.blue(funcName);
+    log.cyan(funcName);
   }
   return log.moat(0);
 };

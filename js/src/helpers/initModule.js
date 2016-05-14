@@ -1,6 +1,8 @@
-var Q, alertEvent, compileFile, listeners, syncFs;
+var Q, alertEvent, compileFile, executeCompilerEvent, isType, listeners, syncFs;
 
 syncFs = require("io/sync");
+
+isType = require("isType");
 
 Q = require("q");
 
@@ -46,10 +48,9 @@ module.exports = function(mod, options) {
   });
 };
 
-listeners = {
-  ready: function(files) {},
-  add: function(file) {
-    alertEvent("add", file.path);
+executeCompilerEvent = listeners = {
+  compile: function(file, event) {
+    alertEvent(event, file.path);
     return compileFile(file, this).then(function() {
       alertEvent(event, file.dest);
       if (file.mapDest) {
@@ -63,32 +64,24 @@ listeners = {
       }
     }).done();
   },
+  ready: function(files) {},
+  add: function(file) {
+    return listeners.compile(file, "add");
+  },
   change: function(file) {
-    alertEvent("change", file.path);
-    return compileFile(file, this).then(function() {
-      alertEvent("change", file.dest);
-      if (file.mapDest) {
-        return alertEvent("change", file.mapDest);
-      }
-    }).fail(function(error) {
-      if (error.constructor.name === "SyntaxError") {
-        return;
-      }
-      console.log(error.message);
-      throw error;
-    }).done();
+    return listeners.compile(file, "change");
   },
   unlink: function(file) {
-    if (!file.dest) {
-      console.warn("'" + file.path + "' has no compile destination to unlink?");
-      return;
+    var event;
+    event = "unlink";
+    alertEvent(event, file.path);
+    if (file.dest) {
+      syncFs.remove(file.dest);
+      alertEvent(event, file.dest);
     }
-    syncFs.remove(file.dest);
-    alertEvent("unlink", file.path);
-    alertEvent("unlink", file.dest);
-    if (file.mapDest != null) {
+    if (file.mapDest) {
       syncFs.remove(file.mapDest);
-      return alertEvent("unlink", file.mapDest);
+      return alertEvent(event, file.mapDest);
     }
   }
 };

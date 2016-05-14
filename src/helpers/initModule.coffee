@@ -1,5 +1,6 @@
 
 syncFs = require "io/sync"
+isType = require "isType"
 Q = require "q"
 
 compileFile = require "./compileFile"
@@ -40,14 +41,13 @@ module.exports = (mod, options) ->
       change: listeners.change.bind options
       unlink: listeners.unlink
 
+executeCompilerEvent =
+
 listeners =
 
-  ready: (files) ->
-    # TODO: Compile the file, if not yet compiled.
+  compile: (file, event) ->
 
-  add: (file) ->
-
-    alertEvent "add", file.path
+    alertEvent event, file.path
 
     compileFile file, this
 
@@ -62,30 +62,24 @@ listeners =
 
     .done()
 
+  ready: (files) ->
+    # TODO: Compile the file, if not yet compiled.
+
+  add: (file) ->
+    listeners.compile file, "add"
+
   change: (file) ->
-
-    alertEvent "change", file.path
-
-    compileFile file, this
-
-    .then ->
-      alertEvent "change", file.dest
-      alertEvent "change", file.mapDest if file.mapDest
-
-    .fail (error) ->
-      return if error.constructor.name is "SyntaxError"
-      console.log error.message
-      throw error
-
-    .done()
+    listeners.compile file, "change"
 
   unlink: (file) ->
-    unless file.dest
-      console.warn "'#{file.path}' has no compile destination to unlink?"
-      return
-    syncFs.remove file.dest
-    alertEvent "unlink", file.path
-    alertEvent "unlink", file.dest
-    if file.mapDest?
+
+    event = "unlink"
+    alertEvent event, file.path
+
+    if file.dest
+      syncFs.remove file.dest
+      alertEvent event, file.dest
+
+    if file.mapDest
       syncFs.remove file.mapDest
-      alertEvent "unlink", file.mapDest
+      alertEvent event, file.mapDest

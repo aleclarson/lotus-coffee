@@ -1,5 +1,6 @@
 
 syncFs = require "io/sync"
+isType = require "isType"
 globby = require "globby"
 sync = require "sync"
 Path = require "path"

@@ -3,6 +3,8 @@ repeatString = require "repeat-string"
 combine = require "combine"
 coffee = require "coffee-script"
 syncFs = require "io/sync"
+isType = require "isType"
+assert = require "assert"
 Path = require "path"
 Q = require "q"
 
@@ -43,7 +45,7 @@ module.exports = (file, options) ->
 
   .fail (error) ->
     if error instanceof SyntaxError
-      error.print = SyntaxError.Printer error
+      error.print = SyntaxError.Printer error, file.path
     throw error
 
   .then (compiled) ->
@@ -65,7 +67,7 @@ module.exports = (file, options) ->
     syncFs.write dest.path, js
     assert syncFs.read(dest.path) is js, { jsPath: dest.path, js, reason: "Failed to write '.js' file!" }
 
-SyntaxError.Printer = (error) -> () ->
+SyntaxError.Printer = (error, filePath) -> () ->
 
   label = log.color.red error.constructor.name
   message = error.message
@@ -77,7 +79,7 @@ SyntaxError.Printer = (error) -> () ->
   log.moat 1
   log.withLabel label, message
   log.moat 1
-  printLocation line - 1, file.path
+  printLocation line - 1, filePath
   log.moat 1
   printOffender code[line], column
   log.popIndent()
@@ -97,9 +99,9 @@ printLocation = (lineNumber, filePath, funcName) ->
 
   if funcName?
     log " " if filePath?
-    log.blue.dim "within"
+    log.cyan.dim "within"
     log " "
-    log.blue funcName
+    log.cyan funcName
 
   log.moat 0
 

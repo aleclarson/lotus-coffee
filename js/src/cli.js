@@ -1,6 +1,8 @@
-var Path, Q, alertEvent, compileFile, globby, sync, syncFs;
+var Path, Q, alertEvent, compileFile, globby, isType, sync, syncFs;
 
 syncFs = require("io/sync");
+
+isType = require("isType");
 
 globby = require("globby");
 
