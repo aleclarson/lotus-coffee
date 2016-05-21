@@ -6,6 +6,7 @@ syncFs = require "io/sync"
 isType = require "isType"
 assert = require "assert"
 Path = require "path"
+log = require "log"
 Q = require "q"
 
 log.moat 1

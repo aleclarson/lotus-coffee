@@ -1,5 +1,6 @@
 
 Path = require "path"
+log = require "log"
 
 module.exports = (event, path) ->
   log.moat 1

@@ -1,4 +1,4 @@
-var Path, Q, assert, coffee, combine, isType, printLocation, printOffender, repeatString, syncFs;
+var Path, Q, assert, coffee, combine, isType, log, printLocation, printOffender, repeatString, syncFs;
 
 repeatString = require("repeat-string");
 
@@ -13,6 +13,8 @@ isType = require("isType");
 assert = require("assert");
 
 Path = require("path");
+
+log = require("log");
 
 Q = require("q");
 
