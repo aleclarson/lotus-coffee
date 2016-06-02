@@ -11,3 +11,5 @@ exports.initCommands = ->
 
 exports.initModule = ->
   require "./helpers/initModule"
+
+# TODO: Compile src/spec directories during the 'build' phase.

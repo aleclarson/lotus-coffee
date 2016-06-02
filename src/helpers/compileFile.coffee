@@ -50,23 +50,24 @@ module.exports = (file, options) ->
     throw error
 
   .then (compiled) ->
-    js = compiled.js
-    map = compiled.v3SourceMap
 
     dest = lotus.File file.dest, file.module
     dest.lastModified = lastModified
 
-    if isType map, String
+    js = [ if sourceMap then compiled.js else compiled ]
+    if sourceMap
+      js = js.concat [
+        log.ln
+        "//# sourceMappingURL="
+        Path.relative Path.dirname(dest.path), mapPath
+        log.ln
+      ]
 
-      js += log.ln + "//# sourceMappingURL=" +
-        Path.relative(Path.dirname(dest.path), mapPath) + log.ln
+    syncFs.write dest.path, js.join ""
 
+    if sourceMap
       file.mapDest = mapPath
-      syncFs.write mapPath, map
-      assert syncFs.read(mapPath) is map, { mapPath, map, reason: "Failed to write '.map' file!" }
-
-    syncFs.write dest.path, js
-    assert syncFs.read(dest.path) is js, { jsPath: dest.path, js, reason: "Failed to write '.js' file!" }
+      syncFs.write mapPath, compiled.v3SourceMap
 
 SyntaxError.Printer = (error, filePath) -> () ->
 

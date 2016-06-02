@@ -61,27 +61,18 @@ module.exports = function(file, options) {
     }
     throw error;
   }).then(function(compiled) {
-    var dest, js, map;
-    js = compiled.js;
-    map = compiled.v3SourceMap;
+    var dest, js;
     dest = lotus.File(file.dest, file.module);
     dest.lastModified = lastModified;
-    if (isType(map, String)) {
-      js += log.ln + "//# sourceMappingURL=" + Path.relative(Path.dirname(dest.path), mapPath) + log.ln;
-      file.mapDest = mapPath;
-      syncFs.write(mapPath, map);
-      assert(syncFs.read(mapPath) === map, {
-        mapPath: mapPath,
-        map: map,
-        reason: "Failed to write '.map' file!"
-      });
+    js = [sourceMap ? compiled.js : compiled];
+    if (sourceMap) {
+      js = js.concat([log.ln, "//# sourceMappingURL=", Path.relative(Path.dirname(dest.path), mapPath), log.ln]);
     }
-    syncFs.write(dest.path, js);
-    return assert(syncFs.read(dest.path) === js, {
-      jsPath: dest.path,
-      js: js,
-      reason: "Failed to write '.js' file!"
-    });
+    syncFs.write(dest.path, js.join(""));
+    if (sourceMap) {
+      file.mapDest = mapPath;
+      return syncFs.write(mapPath, compiled.v3SourceMap);
+    }
   });
 };
 
