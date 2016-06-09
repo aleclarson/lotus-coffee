@@ -1,4 +1,6 @@
-var Path, Q, alertEvent, compileFile, globby, isType, log, sync, syncFs;
+var Path, Promise, alertEvent, compileFile, globby, isType, log, sync, syncFs;
+
+Promise = require("Promise");
 
 syncFs = require("io/sync");
 
@@ -11,8 +13,6 @@ sync = require("sync");
 Path = require("path");
 
 log = require("log");
-
-Q = require("q");
 
 compileFile = require("./helpers/compileFile");
 
@@ -57,7 +57,7 @@ module.exports = function(options) {
       var startTime, successCount;
       startTime = Date.now();
       successCount = 0;
-      return Q.all(sync.map(files, function(file) {
+      return Promise.map(files, function(file) {
         var dest, specDest;
         if ((file.type === "src") && !file.module.dest) {
           dest = Path.join(modulePath, config.dest || "js/src");
@@ -97,7 +97,7 @@ module.exports = function(options) {
           }
           throw error;
         });
-      })).then(function() {
+      }).then(function() {
         var elapsedTime;
         elapsedTime = Date.now() - startTime;
         log.moat(1);

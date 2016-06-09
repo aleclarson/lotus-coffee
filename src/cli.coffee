@@ -1,11 +1,11 @@
 
+Promise = require "Promise"
 syncFs = require "io/sync"
 isType = require "isType"
 globby = require "globby"
 sync = require "sync"
 Path = require "path"
 log = require "log"
-Q = require "q"
 
 compileFile = require "./helpers/compileFile"
 alertEvent = require "./helpers/alertEvent"
@@ -56,7 +56,7 @@ module.exports = (options) ->
       startTime = Date.now()
       successCount = 0
 
-      Q.all sync.map files, (file) ->
+      Promise.map files, (file) ->
 
         if (file.type is "src") and not file.module.dest
           dest = Path.join modulePath, config.dest or "js/src"

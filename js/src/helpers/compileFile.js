@@ -1,6 +1,8 @@
-var Path, Q, assert, coffee, combine, isType, log, printLocation, printOffender, repeatString, syncFs;
+var Path, Promise, assert, coffee, combine, isType, log, printLocation, printOffender, repeatString, syncFs;
 
 repeatString = require("repeat-string");
+
+Promise = require("Promise");
 
 combine = require("combine");
 
@@ -16,8 +18,6 @@ Path = require("path");
 
 log = require("log");
 
-Q = require("q");
-
 log.moat(1);
 
 log.white("coffee.VERSION = ");
@@ -30,7 +30,7 @@ module.exports = function(file, options) {
   var bare, error, generatedFile, lastModified, mapPath, sourceFiles, sourceMap, sourceRoot;
   if (!file.dest) {
     error = Error("'file.dest' must be defined before compiling!");
-    return Q.reject(error);
+    return Promise.reject(error);
   }
   lastModified = new Date;
   if (options == null) {

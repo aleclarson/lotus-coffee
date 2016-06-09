@@ -1,12 +1,10 @@
-var Q, alertEvent, compileFile, executeCompilerEvent, isType, listeners, log, syncFs;
+var alertEvent, compileFile, executeCompilerEvent, isType, listeners, log, syncFs;
 
 syncFs = require("io/sync");
 
 isType = require("isType");
 
 log = require("log");
-
-Q = require("q");
 
 compileFile = require("./compileFile");
 

@@ -1,5 +1,6 @@
 
 repeatString = require "repeat-string"
+Promise = require "Promise"
 combine = require "combine"
 coffee = require "coffee-script"
 syncFs = require "io/sync"
@@ -7,7 +8,6 @@ isType = require "isType"
 assert = require "assert"
 Path = require "path"
 log = require "log"
-Q = require "q"
 
 log.moat 1
 log.white "coffee.VERSION = "
@@ -18,7 +18,7 @@ module.exports = (file, options) ->
 
   unless file.dest
     error = Error "'file.dest' must be defined before compiling!"
-    return Q.reject error
+    return Promise.reject error
 
   lastModified = new Date
 

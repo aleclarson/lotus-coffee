@@ -2,7 +2,6 @@
 syncFs = require "io/sync"
 isType = require "isType"
 log = require "log"
-Q = require "q"
 
 compileFile = require "./compileFile"
 alertEvent = require "./alertEvent"
