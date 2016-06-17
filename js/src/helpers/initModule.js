@@ -62,7 +62,7 @@ executeCompilerEvent = listeners = {
       } else {
         throw error;
       }
-    }).done();
+    });
   },
   ready: function(files) {},
   add: function(file) {

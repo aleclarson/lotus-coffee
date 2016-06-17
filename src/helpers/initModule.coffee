@@ -60,8 +60,6 @@ listeners =
         error.print()
       else throw error
 
-    .done()
-
   ready: (files) ->
     # TODO: Compile the file, if not yet compiled.
 
