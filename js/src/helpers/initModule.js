@@ -1,10 +1,8 @@
-var alertEvent, compileFile, executeCompilerEvent, isType, listeners, log, syncFs;
+var alertEvent, compileFile, isType, onAdd, onChange, onCompile, onReady, onUnlink, syncFs;
 
 syncFs = require("io/sync");
 
 isType = require("isType");
-
-log = require("log");
 
 compileFile = require("./compileFile");
 
@@ -40,49 +38,51 @@ module.exports = function(mod, options) {
       patterns[1] = specDest + "/**/*.coffee";
     }
     return mod.watch(patterns, {
-      ready: listeners.ready,
-      add: listeners.add.bind(options),
-      change: listeners.change.bind(options),
-      unlink: listeners.unlink
+      ready: onReady,
+      add: onAdd.bind(options),
+      change: onChange.bind(options),
+      unlink: onUnlink
     });
   });
 };
 
-executeCompilerEvent = listeners = {
-  compile: function(file, event) {
-    alertEvent(event, file.path);
-    return compileFile(file, this).then(function() {
-      alertEvent(event, file.dest);
-      if (file.mapDest) {
-        return alertEvent(event, file.mapDest);
-      }
-    }).fail(function(error) {
-      if (error instanceof SyntaxError) {
-        return error.print();
-      } else {
-        throw error;
-      }
-    });
-  },
-  ready: function(files) {},
-  add: function(file) {
-    return listeners.compile(file, "add");
-  },
-  change: function(file) {
-    return listeners.compile(file, "change");
-  },
-  unlink: function(file) {
-    var event;
-    event = "unlink";
-    alertEvent(event, file.path);
-    if (file.dest) {
-      syncFs.remove(file.dest);
-      alertEvent(event, file.dest);
-    }
+onCompile = function(file, event) {
+  alertEvent(event, file.path);
+  return compileFile(file, this).then(function() {
+    alertEvent(event, file.dest);
     if (file.mapDest) {
-      syncFs.remove(file.mapDest);
       return alertEvent(event, file.mapDest);
     }
+  }).fail(function(error) {
+    if (error instanceof SyntaxError) {
+      return error.print();
+    } else {
+      throw error;
+    }
+  });
+};
+
+onReady = function(files) {};
+
+onAdd = function(file) {
+  return onCompile.call(this, file, "add");
+};
+
+onChange = function(file) {
+  return onCompile.call(this, file, "change");
+};
+
+onUnlink = function(file) {
+  var event;
+  event = "unlink";
+  alertEvent(event, file.path);
+  if (file.dest) {
+    syncFs.remove(file.dest);
+    alertEvent(event, file.dest);
+  }
+  if (file.mapDest) {
+    syncFs.remove(file.mapDest);
+    return alertEvent(event, file.mapDest);
   }
 };
 

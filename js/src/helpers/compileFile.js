@@ -1,18 +1,12 @@
-var Path, Promise, assert, coffee, combine, isType, log, printLocation, printOffender, repeatString, syncFs;
+var Path, Promise, coffee, log, printLocation, printOffender, repeatString, syncFs;
 
 repeatString = require("repeat-string");
 
 Promise = require("Promise");
 
-combine = require("combine");
-
 coffee = require("coffee-script");
 
 syncFs = require("io/sync");
-
-isType = require("isType");
-
-assert = require("assert");
 
 Path = require("path");
 

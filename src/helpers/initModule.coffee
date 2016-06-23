@@ -1,7 +1,6 @@
 
 syncFs = require "io/sync"
 isType = require "isType"
-log = require "log"
 
 compileFile = require "./compileFile"
 alertEvent = require "./alertEvent"
@@ -36,48 +35,44 @@ module.exports = (mod, options) ->
     patterns[1] = specDest + "/**/*.coffee" if specDest
 
     mod.watch patterns,
-      ready: listeners.ready
-      add: listeners.add.bind options
-      change: listeners.change.bind options
-      unlink: listeners.unlink
+      ready: onReady
+      add: onAdd.bind options
+      change: onChange.bind options
+      unlink: onUnlink
 
-executeCompilerEvent =
+onCompile = (file, event) ->
 
-listeners =
+  alertEvent event, file.path
 
-  compile: (file, event) ->
+  compileFile file, this
 
-    alertEvent event, file.path
+  .then ->
+    alertEvent event, file.dest
+    alertEvent event, file.mapDest if file.mapDest
 
-    compileFile file, this
+  .fail (error) ->
+    if error instanceof SyntaxError
+      error.print()
+    else throw error
 
-    .then ->
-      alertEvent event, file.dest
-      alertEvent event, file.mapDest if file.mapDest
+onReady = (files) ->
+  # TODO: Compile the file, if not yet compiled.
 
-    .fail (error) ->
-      if error instanceof SyntaxError
-        error.print()
-      else throw error
+onAdd = (file) ->
+  onCompile.call this, file, "add"
 
-  ready: (files) ->
-    # TODO: Compile the file, if not yet compiled.
+onChange = (file) ->
+  onCompile.call this, file, "change"
 
-  add: (file) ->
-    listeners.compile file, "add"
+onUnlink = (file) ->
 
-  change: (file) ->
-    listeners.compile file, "change"
+  event = "unlink"
+  alertEvent event, file.path
 
-  unlink: (file) ->
+  if file.dest
+    syncFs.remove file.dest
+    alertEvent event, file.dest
 
-    event = "unlink"
-    alertEvent event, file.path
-
-    if file.dest
-      syncFs.remove file.dest
-      alertEvent event, file.dest
-
-    if file.mapDest
-      syncFs.remove file.mapDest
-      alertEvent event, file.mapDest
+  if file.mapDest
+    syncFs.remove file.mapDest
+    alertEvent event, file.mapDest
