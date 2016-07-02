@@ -1,41 +1,38 @@
-var alertEvent, compileFile, isType, onAdd, onChange, onCompile, onReady, onUnlink, syncFs;
-
-syncFs = require("io/sync");
+var alertEvent, fs, isType, onAdd, onChange, onCompile, onReady, onUnlink, transform;
 
 isType = require("isType");
 
-compileFile = require("./compileFile");
+fs = require("io/sync");
 
 alertEvent = require("./alertEvent");
 
+transform = require("./transform");
+
 module.exports = function(mod, options) {
   return mod.load(["config"]).then(function() {
-    var dest, patterns, specDest;
-    if (isType(options.dest, String)) {
-      dest = options.dest;
-    } else {
-      dest = "src";
+    var patterns;
+    try {
+      if (mod.src == null) {
+        mod.src = "src";
+      }
+    } catch (error1) {}
+    try {
+      if (mod.spec == null) {
+        mod.spec = "spec";
+      }
+    } catch (error1) {}
+    if (mod.dest) {
+      fs.makeDir(mod.dest);
     }
-    if (isType(options.specDest, String)) {
-      specDest = options.specDest;
-    } else {
-      specDest = "spec";
-    }
-    if (!mod.dest) {
-      log.moat(1);
-      log.yellow("Warning: ");
-      log.white(mod.name);
-      log.moat(0);
-      log.gray.dim("A valid 'dest' must exist before 'lotus-coffee' can work!");
-      log.moat(1);
-      return;
+    if (mod.specDest) {
+      fs.makeDir(mod.specDest);
     }
     patterns = [];
-    if (dest) {
-      patterns[0] = dest + "/**/*.coffee";
+    if (mod.src) {
+      patterns[0] = mod.src + "/**/*.coffee";
     }
-    if (specDest) {
-      patterns[1] = specDest + "/**/*.coffee";
+    if (mod.spec) {
+      patterns[1] = mod.spec + "/**/*.coffee";
     }
     return mod.watch(patterns, {
       ready: onReady,
@@ -48,7 +45,7 @@ module.exports = function(mod, options) {
 
 onCompile = function(file, event) {
   alertEvent(event, file.path);
-  return compileFile(file, this).then(function() {
+  return transform(file, this).then(function() {
     alertEvent(event, file.dest);
     if (file.mapDest) {
       return alertEvent(event, file.mapDest);
@@ -56,9 +53,17 @@ onCompile = function(file, event) {
   }).fail(function(error) {
     if (error instanceof SyntaxError) {
       return error.print();
-    } else {
-      throw error;
     }
+    if (error.message === "'file.dest' must be defined before compiling!") {
+      log.moat(1);
+      log.yellow("WARN: ");
+      log.white(lotus.relative(file.path));
+      log.moat(0);
+      log.gray.dim(error.message);
+      log.moat(1);
+      return;
+    }
+    throw error;
   });
 };
 
@@ -77,13 +82,13 @@ onUnlink = function(file) {
   event = "unlink";
   alertEvent(event, file.path);
   if (file.dest) {
-    syncFs.remove(file.dest);
+    fs.remove(file.dest);
     alertEvent(event, file.dest);
   }
   if (file.mapDest) {
-    syncFs.remove(file.mapDest);
+    fs.remove(file.mapDest);
     return alertEvent(event, file.mapDest);
   }
 };
 
-//# sourceMappingURL=../../../map/src/helpers/initModule.map
+//# sourceMappingURL=../../map/src/initModule.map

@@ -1,9 +1,9 @@
 
-syncFs = require "io/sync"
 isType = require "isType"
+fs = require "io/sync"
 
-compileFile = require "./compileFile"
 alertEvent = require "./alertEvent"
+transform = require "./transform"
 
 module.exports = (mod, options) ->
 
@@ -11,28 +11,15 @@ module.exports = (mod, options) ->
 
   .then ->
 
-    if isType options.dest, String
-      dest = options.dest
-    else
-      dest = "src"
+    try mod.src ?= "src"
+    try mod.spec ?= "spec"
 
-    if isType options.specDest, String
-      specDest = options.specDest
-    else
-      specDest = "spec"
-
-    unless mod.dest
-      log.moat 1
-      log.yellow "Warning: "
-      log.white mod.name
-      log.moat 0
-      log.gray.dim "A valid 'dest' must exist before 'lotus-coffee' can work!"
-      log.moat 1
-      return
+    fs.makeDir mod.dest if mod.dest
+    fs.makeDir mod.specDest if mod.specDest
 
     patterns = []
-    patterns[0] = dest + "/**/*.coffee" if dest
-    patterns[1] = specDest + "/**/*.coffee" if specDest
+    patterns[0] = mod.src + "/**/*.coffee" if mod.src
+    patterns[1] = mod.spec + "/**/*.coffee" if mod.spec
 
     mod.watch patterns,
       ready: onReady
@@ -44,16 +31,27 @@ onCompile = (file, event) ->
 
   alertEvent event, file.path
 
-  compileFile file, this
+  transform file, this
 
   .then ->
     alertEvent event, file.dest
     alertEvent event, file.mapDest if file.mapDest
 
   .fail (error) ->
+
     if error instanceof SyntaxError
-      error.print()
-    else throw error
+      return error.print()
+
+    if error.message is "'file.dest' must be defined before compiling!"
+      log.moat 1
+      log.yellow "WARN: "
+      log.white lotus.relative file.path
+      log.moat 0
+      log.gray.dim error.message
+      log.moat 1
+      return
+
+    throw error
 
 onReady = (files) ->
   # TODO: Compile the file, if not yet compiled.
@@ -70,9 +68,9 @@ onUnlink = (file) ->
   alertEvent event, file.path
 
   if file.dest
-    syncFs.remove file.dest
+    fs.remove file.dest
     alertEvent event, file.dest
 
   if file.mapDest
-    syncFs.remove file.mapDest
+    fs.remove file.mapDest
     alertEvent event, file.mapDest

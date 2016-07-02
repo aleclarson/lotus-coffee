@@ -1,4 +1,4 @@
-var Path, Promise, coffee, log, printLocation, printOffender, repeatString, syncFs;
+var Promise, coffee, fs, log, path, printLocation, printOffender, repeatString;
 
 repeatString = require("repeat-string");
 
@@ -6,11 +6,11 @@ Promise = require("Promise");
 
 coffee = require("coffee-script");
 
-syncFs = require("io/sync");
-
-Path = require("path");
+path = require("path");
 
 log = require("log");
+
+fs = require("io/sync");
 
 log.moat(1);
 
@@ -20,11 +20,10 @@ log.green(coffee.VERSION);
 
 log.moat(1);
 
-module.exports = function(file, options) {
-  var bare, error, generatedFile, lastModified, mapPath, sourceFiles, sourceMap, sourceRoot;
+module.exports = Promise.wrap(function(file, options) {
+  var bare, generatedFile, lastModified, mapPath, sourceFiles, sourceMap, sourceRoot;
   if (!file.dest) {
-    error = Error("'file.dest' must be defined before compiling!");
-    return Promise.reject(error);
+    throw Error("'file.dest' must be defined before compiling!");
   }
   lastModified = new Date;
   if (options == null) {
@@ -33,8 +32,8 @@ module.exports = function(file, options) {
   bare = options.bare != null ? options.bare : options.bare = true;
   sourceMap = options.sourceMap != null ? options.sourceMap : options.sourceMap = true;
   if (sourceMap) {
-    mapPath = Path.join(file.module.path, "map", file.dir, file.name + ".map");
-    sourceRoot = Path.relative(Path.dirname(mapPath), Path.dirname(file.path));
+    mapPath = path.join(file.module.path, "map", file.dir, file.name + ".map");
+    sourceRoot = path.relative(path.dirname(mapPath), path.dirname(file.path));
     sourceFiles = [file.name + ".coffee"];
     generatedFile = file.name + ".js";
   }
@@ -60,15 +59,15 @@ module.exports = function(file, options) {
     dest.lastModified = lastModified;
     js = [sourceMap ? compiled.js : compiled];
     if (sourceMap) {
-      js = js.concat([log.ln, "//# sourceMappingURL=", Path.relative(Path.dirname(dest.path), mapPath), log.ln]);
+      js = js.concat([log.ln, "//# sourceMappingURL=", path.relative(path.dirname(dest.path), mapPath), log.ln]);
     }
-    syncFs.write(dest.path, js.join(""));
+    fs.write(dest.path, js.join(""));
     if (sourceMap) {
       file.mapDest = mapPath;
-      return syncFs.write(mapPath, compiled.v3SourceMap);
+      return fs.write(mapPath, compiled.v3SourceMap);
     }
   });
-};
+});
 
 SyntaxError.Printer = function(error, filePath) {
   return function() {
@@ -95,12 +94,12 @@ printLocation = function(lineNumber, filePath, funcName) {
   log.yellow("" + lineNumber);
   log(repeatString(" ", 5 - ("" + lineNumber).length));
   if (filePath != null) {
-    dirName = Path.dirname(filePath);
-    dirPath = Path.relative(lotus.path, dirName);
+    dirName = path.dirname(filePath);
+    dirPath = path.relative(lotus.path, dirName);
     if (dirName !== ".") {
       log.green.dim(dirPath + "/");
     }
-    log.green(Path.basename(filePath));
+    log.green(path.basename(filePath));
   }
   if (funcName != null) {
     if (filePath != null) {
@@ -134,4 +133,4 @@ printOffender = function(line, column) {
   return log.popIndent();
 };
 
-//# sourceMappingURL=../../../map/src/helpers/compileFile.map
+//# sourceMappingURL=../../map/src/transform.map

@@ -11,4 +11,4 @@ module.exports = function(event, path) {
   return log.moat(1);
 };
 
-//# sourceMappingURL=../../../map/src/helpers/alertEvent.map
+//# sourceMappingURL=../../map/src/alertEvent.map

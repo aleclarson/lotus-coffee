@@ -9,7 +9,7 @@ exports.initCommands = function() {
 };
 
 exports.initModule = function() {
-  return require("./helpers/initModule");
+  return require("./initModule");
 };
 
 //# sourceMappingURL=../../map/src/index.map

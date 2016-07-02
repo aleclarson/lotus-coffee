@@ -1,12 +1,8 @@
-var Path, Promise, alertEvent, compileFile, globby, isType, log, sync, syncFs;
+var Path, Promise, alertEvent, fs, isType, log, sync, transform, transformFiles;
 
 Promise = require("Promise");
 
-syncFs = require("io/sync");
-
 isType = require("isType");
-
-globby = require("globby");
 
 sync = require("sync");
 
@@ -14,100 +10,94 @@ Path = require("path");
 
 log = require("log");
 
-compileFile = require("./helpers/compileFile");
+fs = require("io/sync");
 
-alertEvent = require("./helpers/alertEvent");
+alertEvent = require("./alertEvent");
+
+transform = require("./transform");
 
 module.exports = function(options) {
-  var Module, error, mod, moduleName, modulePath;
-  Module = lotus.Module;
-  modulePath = Module.resolvePath(options._.shift() || ".");
-  moduleName = Path.basename(modulePath);
-  try {
-    mod = Module(moduleName);
-  } catch (error1) {
-    error = error1;
-    error["catch"]();
-    log.moat(1);
-    log.red("Module error: ");
-    log.white(modulePath);
-    log.moat(0);
-    log.gray.dim(error.stack);
-    log.moat(1);
-    return;
-  }
-  return mod.load(["config"]).then(function() {
-    var config, files, patterns;
-    config = mod.config["lotus-coffee"] || {};
-    if (options.refresh) {
-      syncFs.remove(modulePath + "/js");
-      syncFs.remove(modulePath + "/map");
-    }
-    if (isType(config.files, Array)) {
-      files = config.files;
-    } else if (isType(mod.config.files, Array)) {
-      files = mod.config.files;
-    } else {
-      files = ["src", "spec"];
-    }
-    patterns = sync.map(files, function(pattern) {
-      return Path.resolve(mod.path, pattern + "/**/*.coffee");
-    });
-    return mod.crawl(patterns).then(function(files) {
-      var startTime, successCount;
-      startTime = Date.now();
-      successCount = 0;
-      return Promise.map(files, function(file) {
-        var dest, specDest;
-        if ((file.type === "src") && !file.module.dest) {
-          dest = Path.join(modulePath, config.dest || "js/src");
-          if (!syncFs.isDir(dest)) {
-            syncFs.makeDir(dest);
-            alertEvent("add", dest);
-          }
-          file.module.dest = dest;
+  var moduleName;
+  moduleName = options._.shift() || ".";
+  return lotus.Module.load(moduleName).then(function(module) {
+    return module.load(["config"]).then(function() {
+      var patterns;
+      try {
+        if (module.src == null) {
+          module.src = "src";
         }
-        if ((file.type === "spec") && !file.module.specDest) {
-          specDest = Path.join(modulePath, config.specDest || "js/spec");
-          if (!syncFs.isDir(specDest)) {
-            syncFs.makeDir(specDest);
-            alertEvent("add", specDest);
-          }
-          file.module.specDest = specDest;
+      } catch (error1) {}
+      try {
+        if (module.spec == null) {
+          module.spec = "spec";
         }
-        return compileFile(file, options).then(function() {
-          successCount += 1;
-          alertEvent("change", file.dest);
-          if (file.mapDest) {
-            return alertEvent("change", file.mapDest);
-          }
-        }).fail(function(error) {
-          if (error instanceof SyntaxError) {
-            error.print();
-            return;
-          }
-          if (error.message === "'file.dest' must be defined before compiling!") {
-            log.moat(1);
-            log.yellow("Warning: ");
-            log.white(file.path);
-            log.moat(0);
-            log.gray.dim(error.message);
-            log.moat(1);
-            return;
-          }
-          throw error;
-        });
-      }).then(function() {
-        var elapsedTime;
-        elapsedTime = Date.now() - startTime;
-        log.moat(1);
-        log.gray("Successfully compiled ");
-        log.white(successCount);
-        log.gray(" files ");
-        log.gray.dim("(in " + elapsedTime + " ms)");
-        return log.moat(1);
+      } catch (error1) {}
+      if (module.dest) {
+        if (options.refresh) {
+          fs.remove(module.dest);
+        }
+        fs.makeDir(module.dest);
+      }
+      if (module.specDest) {
+        if (options.refresh) {
+          fs.remove(module.specDest);
+        }
+        fs.makeDir(module.specDest);
+      }
+      patterns = [];
+      if (module.src) {
+        patterns[0] = module.src + "/**/*.coffee";
+      }
+      if (module.spec) {
+        patterns[1] = module.spec + "/**/*.coffee";
+      }
+      return module.crawl(patterns).then(function(files) {
+        return transformFiles(files, options);
       });
     });
+  });
+};
+
+transformFiles = function(files, options) {
+  var startTime;
+  log.moat(1);
+  log.green.bold("start: ");
+  log.gray.dim(files.length + " files");
+  log.moat(1);
+  startTime = Date.now();
+  return Promise.chain(files, function(file) {
+    return transform(file, options).then(function() {
+      if (options.verbose) {
+        log.moat(1);
+        log.cyan("• ");
+        log.white(lotus.relative(file.path));
+        return log.moat(1);
+      } else {
+        if (25 <= log.line.length - log.indent) {
+          log.moat(0);
+        }
+        return log.cyan("•");
+      }
+    }).fail(function(error) {
+      if (error instanceof SyntaxError) {
+        return error.print();
+      }
+      if (error.message === "'file.dest' must be defined before compiling!") {
+        log.moat(1);
+        log.yellow("WARN: ");
+        log.white(lotus.relative(file.path));
+        log.moat(0);
+        log.gray.dim(error.message);
+        log.moat(1);
+        return;
+      }
+      throw error;
+    });
+  }).then(function() {
+    log.moat(1);
+    log.green.bold("finish: ");
+    log.gray.dim((Date.now() - startTime) + " ms");
+    return log.moat(1);
   });
 };
 

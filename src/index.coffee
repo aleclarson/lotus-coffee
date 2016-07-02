@@ -10,6 +10,6 @@ exports.initCommands = ->
   coffee: -> require "./cli"
 
 exports.initModule = ->
-  require "./helpers/initModule"
+  require "./initModule"
 
 # TODO: Compile src/spec directories during the 'build' phase.

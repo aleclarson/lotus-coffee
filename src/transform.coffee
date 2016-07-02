@@ -2,20 +2,19 @@
 repeatString = require "repeat-string"
 Promise = require "Promise"
 coffee = require "coffee-script"
-syncFs = require "io/sync"
-Path = require "path"
+path = require "path"
 log = require "log"
+fs = require "io/sync"
 
 log.moat 1
 log.white "coffee.VERSION = "
 log.green coffee.VERSION
 log.moat 1
 
-module.exports = (file, options) ->
+module.exports = Promise.wrap (file, options) ->
 
-  unless file.dest
-    error = Error "'file.dest' must be defined before compiling!"
-    return Promise.reject error
+  if not file.dest
+    throw Error "'file.dest' must be defined before compiling!"
 
   lastModified = new Date
 
@@ -24,8 +23,8 @@ module.exports = (file, options) ->
   sourceMap = options.sourceMap ?= yes
 
   if sourceMap
-    mapPath = Path.join file.module.path, "map", file.dir, file.name + ".map"
-    sourceRoot = Path.relative Path.dirname(mapPath), Path.dirname(file.path)
+    mapPath = path.join file.module.path, "map", file.dir, file.name + ".map"
+    sourceRoot = path.relative path.dirname(mapPath), path.dirname(file.path)
     sourceFiles = [file.name + ".coffee"]
     generatedFile = file.name + ".js"
 
@@ -56,15 +55,15 @@ module.exports = (file, options) ->
       js = js.concat [
         log.ln
         "//# sourceMappingURL="
-        Path.relative Path.dirname(dest.path), mapPath
+        path.relative path.dirname(dest.path), mapPath
         log.ln
       ]
 
-    syncFs.write dest.path, js.join ""
+    fs.write dest.path, js.join ""
 
     if sourceMap
       file.mapDest = mapPath
-      syncFs.write mapPath, compiled.v3SourceMap
+      fs.write mapPath, compiled.v3SourceMap
 
 SyntaxError.Printer = (error, filePath) -> () ->
 
@@ -91,10 +90,10 @@ printLocation = (lineNumber, filePath, funcName) ->
   log repeatString " ", 5 - "#{lineNumber}".length
 
   if filePath?
-    dirName = Path.dirname filePath
-    dirPath = Path.relative lotus.path, dirName
+    dirName = path.dirname filePath
+    dirPath = path.relative lotus.path, dirName
     log.green.dim dirPath + "/" if dirName isnt "."
-    log.green Path.basename filePath
+    log.green path.basename filePath
 
   if funcName?
     log " " if filePath?

@@ -1,7 +1,7 @@
 {
   "version": 3,
   "file": "alertEvent.js",
-  "sourceRoot": "../../../src/helpers",
+  "sourceRoot": "../../src",
   "sources": [
     "alertEvent.coffee"
   ],

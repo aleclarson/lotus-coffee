@@ -1,106 +1,86 @@
 
 Promise = require "Promise"
-syncFs = require "io/sync"
 isType = require "isType"
-globby = require "globby"
 sync = require "sync"
 Path = require "path"
 log = require "log"
+fs = require "io/sync"
 
-compileFile = require "./helpers/compileFile"
-alertEvent = require "./helpers/alertEvent"
+alertEvent = require "./alertEvent"
+transform = require "./transform"
 
 module.exports = (options) ->
 
-  { Module } = lotus
+  moduleName = options._.shift() or "."
 
-  modulePath = Module.resolvePath options._.shift() or "."
-  moduleName = Path.basename modulePath
+  lotus.Module.load moduleName
 
-  try mod = Module moduleName
-  catch error
-    error.catch()
-    log.moat 1
-    log.red "Module error: "
-    log.white modulePath
-    log.moat 0
-    log.gray.dim error.stack
-    log.moat 1
-    return
+  .then (module) ->
 
-  mod.load [ "config" ]
+    module.load [ "config" ]
+
+    .then ->
+
+      try module.src ?= "src"
+      try module.spec ?= "spec"
+
+      if module.dest
+        fs.remove module.dest if options.refresh
+        fs.makeDir module.dest
+
+      if module.specDest
+        fs.remove module.specDest if options.refresh
+        fs.makeDir module.specDest
+
+      patterns = []
+      patterns[0] = module.src + "/**/*.coffee" if module.src
+      patterns[1] = module.spec + "/**/*.coffee" if module.spec
+
+      module.crawl patterns
+
+      .then (files) -> transformFiles files, options
+
+transformFiles = (files, options) ->
+
+  log.moat 1
+  log.green.bold "start: "
+  log.gray.dim files.length + " files"
+  log.moat 1
+
+  startTime = Date.now()
+
+  Promise.chain files, (file) ->
+
+    transform file, options
+
+    .then ->
+      if options.verbose
+        log.moat 1
+        log.cyan "• "
+        log.white lotus.relative file.path
+        log.moat 1
+      else
+        log.moat 0 if 25 <= log.line.length - log.indent
+        log.cyan "•"
+
+    .fail (error) ->
+
+      if error instanceof SyntaxError
+        return error.print()
+
+      if error.message is "'file.dest' must be defined before compiling!"
+        log.moat 1
+        log.yellow "WARN: "
+        log.white lotus.relative file.path
+        log.moat 0
+        log.gray.dim error.message
+        log.moat 1
+        return
+
+      throw error
 
   .then ->
-
-    config = mod.config["lotus-coffee"] or {}
-
-    # Clear all compiled files, if desired.
-    if options.refresh
-      syncFs.remove modulePath + "/js" # TODO: Make these configurable.
-      syncFs.remove modulePath + "/map"
-
-    if isType config.files, Array
-      files = config.files
-    else if isType mod.config.files, Array
-      files = mod.config.files
-    else
-      files = [ "src", "spec" ]
-
-    patterns = sync.map files, (pattern) ->
-      Path.resolve mod.path, pattern + "/**/*.coffee"
-
-    mod.crawl patterns
-
-    .then (files) ->
-
-      startTime = Date.now()
-      successCount = 0
-
-      Promise.map files, (file) ->
-
-        if (file.type is "src") and not file.module.dest
-          dest = Path.join modulePath, config.dest or "js/src"
-          if not syncFs.isDir dest
-            syncFs.makeDir dest
-            alertEvent "add", dest
-          file.module.dest = dest
-
-        if (file.type is "spec") and not file.module.specDest
-          specDest = Path.join modulePath, config.specDest or "js/spec"
-          if not syncFs.isDir specDest
-            syncFs.makeDir specDest
-            alertEvent "add", specDest
-          file.module.specDest = specDest
-
-        compileFile file, options
-
-        .then ->
-          successCount += 1
-          alertEvent "change", file.dest
-          alertEvent "change", file.mapDest if file.mapDest
-
-        .fail (error) ->
-
-          if error instanceof SyntaxError
-            error.print()
-            return
-
-          if error.message is "'file.dest' must be defined before compiling!"
-            log.moat 1
-            log.yellow "Warning: "
-            log.white file.path
-            log.moat 0
-            log.gray.dim error.message
-            log.moat 1
-            return
-
-          throw error
-
-      .then ->
-        elapsedTime = Date.now() - startTime
-        log.moat 1
-        log.gray "Successfully compiled "
-        log.white successCount
-        log.gray " files "
-        log.gray.dim "(in #{elapsedTime} ms)"
-        log.moat 1
+    log.moat 1
+    log.green.bold "finish: "
+    log.gray.dim (Date.now() - startTime) + " ms"
+    log.moat 1
