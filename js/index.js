@@ -12,4 +12,4 @@ exports.initModule = function() {
   return require("./initModule");
 };
 
-//# sourceMappingURL=../../map/src/index.map
+//# sourceMappingURL=map/index.map

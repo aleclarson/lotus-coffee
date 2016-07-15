@@ -1,76 +1,73 @@
 
 isType = require "isType"
+assert = require "assert"
 fs = require "io/sync"
 
 alertEvent = require "./alertEvent"
 transform = require "./transform"
 
-module.exports = (mod, options) ->
+module.exports = (mod) ->
 
   mod.load [ "config" ]
 
   .then ->
 
     try mod.src ?= "src"
-    try mod.spec ?= "spec"
 
     fs.makeDir mod.dest if mod.dest
-    fs.makeDir mod.specDest if mod.specDest
 
-    patterns = []
-    patterns[0] = mod.src + "/**/*.coffee" if mod.src
-    patterns[1] = mod.spec + "/**/*.coffee" if mod.spec
+    assert mod.src, "Module named '#{mod.name}' must have its `src` defined!"
 
-    mod.watch patterns,
-      ready: onReady
-      add: onAdd.bind options
-      change: onChange.bind options
-      unlink: onUnlink
+    mod.watch mod.src + "/**/*.coffee", createListeners()
 
-onCompile = (file, event) ->
+createListeners = ->
 
-  alertEvent event, file.path
+  ready: (files) ->
+    # TODO: Transform new files.
 
-  transform file, this
+  add: (file) ->
+    event = "add"
+    alertEvent event, file.path
+    transform file
+    .then ->
+      alertEvent event, file.dest
+      alertEvent event, file.mapDest if file.mapDest
+    .fail (error) ->
+      onTransformError file, error
 
-  .then ->
-    alertEvent event, file.dest
-    alertEvent event, file.mapDest if file.mapDest
+  change: (file) ->
+    event = "change"
+    alertEvent event, file.path
+    transform file
+    .then ->
+      alertEvent event, file.dest
+      alertEvent event, file.mapDest if file.mapDest
+    .fail (error) ->
+      onTransformError file, error
 
-  .fail (error) ->
 
-    if error instanceof SyntaxError
-      return error.print()
+  unlink: (file) ->
 
-    if error.message is "'file.dest' must be defined before compiling!"
-      log.moat 1
-      log.yellow "WARN: "
-      log.white lotus.relative file.path
-      log.moat 0
-      log.gray.dim error.message
-      log.moat 1
-      return
+    event = "unlink"
+    alertEvent event, file.path
 
-    throw error
+    if file.dest
+      fs.remove file.dest
+      alertEvent event, file.dest
 
-onReady = (files) ->
-  # TODO: Compile the file, if not yet compiled.
+    if file.mapDest
+      fs.remove file.mapDest
+      alertEvent event, file.mapDest
 
-onAdd = (file) ->
-  onCompile.call this, file, "add"
+onTransformError = (file, error) ->
 
-onChange = (file) ->
-  onCompile.call this, file, "change"
+  if error instanceof SyntaxError
+    return error.print()
 
-onUnlink = (file) ->
-
-  event = "unlink"
-  alertEvent event, file.path
-
-  if file.dest
-    fs.remove file.dest
-    alertEvent event, file.dest
-
-  if file.mapDest
-    fs.remove file.mapDest
-    alertEvent event, file.mapDest
+  log.moat 1
+  log.red "Error: "
+  log.white lotus.relative file.path
+  log.moat 0
+  log.gray.dim error.stack
+  log.moat 1
+  return

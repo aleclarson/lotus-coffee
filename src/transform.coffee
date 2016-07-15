@@ -14,7 +14,7 @@ log.moat 1
 module.exports = Promise.wrap (file, options) ->
 
   if not file.dest
-    throw Error "'file.dest' must be defined before compiling!"
+    throw Error "File must have 'dest' defined before compiling: '#{file.path}'"
 
   lastModified = new Date
 
@@ -23,7 +23,9 @@ module.exports = Promise.wrap (file, options) ->
   sourceMap = options.sourceMap ?= yes
 
   if sourceMap
-    mapPath = path.join file.module.path, "map", file.dir, file.name + ".map"
+    parentDir = path.join file.module.path, file.dir
+    parentDir = path.relative file.module.src, parentDir
+    mapPath = path.join file.module.dest, parentDir, "map", file.name + ".map"
     sourceRoot = path.relative path.dirname(mapPath), path.dirname(file.path)
     sourceFiles = [file.name + ".coffee"]
     generatedFile = file.name + ".js"

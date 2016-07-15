@@ -1,14 +1,10 @@
-var Path, Promise, alertEvent, fs, isType, log, sync, transform, transformFiles;
+var Promise, alertEvent, assert, fs, isType, transform, transformFiles;
 
 Promise = require("Promise");
 
 isType = require("isType");
 
-sync = require("sync");
-
-Path = require("path");
-
-log = require("log");
+assert = require("assert");
 
 fs = require("io/sync");
 
@@ -21,15 +17,9 @@ module.exports = function(options) {
   moduleName = options._.shift() || ".";
   return lotus.Module.load(moduleName).then(function(module) {
     return module.load(["config"]).then(function() {
-      var patterns;
       try {
         if (module.src == null) {
           module.src = "src";
-        }
-      } catch (error1) {}
-      try {
-        if (module.spec == null) {
-          module.spec = "spec";
         }
       } catch (error1) {}
       if (module.dest) {
@@ -38,20 +28,8 @@ module.exports = function(options) {
         }
         fs.makeDir(module.dest);
       }
-      if (module.specDest) {
-        if (options.refresh) {
-          fs.remove(module.specDest);
-        }
-        fs.makeDir(module.specDest);
-      }
-      patterns = [];
-      if (module.src) {
-        patterns[0] = module.src + "/**/*.coffee";
-      }
-      if (module.spec) {
-        patterns[1] = module.spec + "/**/*.coffee";
-      }
-      return module.crawl(patterns).then(function(files) {
+      assert(module.src, "Module named '" + module.name + "' must define its `src`!");
+      return module.crawl(module.src + "/**/*.coffee").then(function(files) {
         return transformFiles(files, options);
       });
     });
@@ -82,7 +60,7 @@ transformFiles = function(files, options) {
       if (error instanceof SyntaxError) {
         return error.print();
       }
-      if (error.message === "'file.dest' must be defined before compiling!") {
+      if (/File must have 'dest' defined before compiling/.test(error.message)) {
         log.moat(1);
         log.yellow("WARN: ");
         log.white(lotus.relative(file.path));
@@ -101,4 +79,4 @@ transformFiles = function(files, options) {
   });
 };
 
-//# sourceMappingURL=../../map/src/cli.map
+//# sourceMappingURL=map/cli.map

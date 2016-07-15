@@ -21,9 +21,9 @@ log.green(coffee.VERSION);
 log.moat(1);
 
 module.exports = Promise.wrap(function(file, options) {
-  var bare, generatedFile, lastModified, mapPath, sourceFiles, sourceMap, sourceRoot;
+  var bare, generatedFile, lastModified, mapPath, parentDir, sourceFiles, sourceMap, sourceRoot;
   if (!file.dest) {
-    throw Error("'file.dest' must be defined before compiling!");
+    throw Error("File must have 'dest' defined before compiling: '" + file.path + "'");
   }
   lastModified = new Date;
   if (options == null) {
@@ -32,7 +32,9 @@ module.exports = Promise.wrap(function(file, options) {
   bare = options.bare != null ? options.bare : options.bare = true;
   sourceMap = options.sourceMap != null ? options.sourceMap : options.sourceMap = true;
   if (sourceMap) {
-    mapPath = path.join(file.module.path, "map", file.dir, file.name + ".map");
+    parentDir = path.join(file.module.path, file.dir);
+    parentDir = path.relative(file.module.src, parentDir);
+    mapPath = path.join(file.module.dest, parentDir, "map", file.name + ".map");
     sourceRoot = path.relative(path.dirname(mapPath), path.dirname(file.path));
     sourceFiles = [file.name + ".coffee"];
     generatedFile = file.name + ".js";
@@ -133,4 +135,4 @@ printOffender = function(line, column) {
   return log.popIndent();
 };
 
-//# sourceMappingURL=../../map/src/transform.map
+//# sourceMappingURL=map/transform.map

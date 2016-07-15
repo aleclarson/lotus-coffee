@@ -1,9 +1,7 @@
 
 Promise = require "Promise"
 isType = require "isType"
-sync = require "sync"
-Path = require "path"
-log = require "log"
+assert = require "assert"
 fs = require "io/sync"
 
 alertEvent = require "./alertEvent"
@@ -22,21 +20,14 @@ module.exports = (options) ->
     .then ->
 
       try module.src ?= "src"
-      try module.spec ?= "spec"
 
       if module.dest
         fs.remove module.dest if options.refresh
         fs.makeDir module.dest
 
-      if module.specDest
-        fs.remove module.specDest if options.refresh
-        fs.makeDir module.specDest
+      assert module.src, "Module named '#{module.name}' must define its `src`!"
 
-      patterns = []
-      patterns[0] = module.src + "/**/*.coffee" if module.src
-      patterns[1] = module.spec + "/**/*.coffee" if module.spec
-
-      module.crawl patterns
+      module.crawl module.src + "/**/*.coffee"
 
       .then (files) -> transformFiles files, options
 
@@ -68,7 +59,7 @@ transformFiles = (files, options) ->
       if error instanceof SyntaxError
         return error.print()
 
-      if error.message is "'file.dest' must be defined before compiling!"
+      if /File must have 'dest' defined before compiling/.test error.message
         log.moat 1
         log.yellow "WARN: "
         log.white lotus.relative file.path
