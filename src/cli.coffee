@@ -27,7 +27,8 @@ module.exports = (options) ->
 
       assert module.src, "Module named '#{module.name}' must define its `src`!"
 
-      module.crawl module.src + "/**/*.coffee"
+      module.crawl module.src + "/**/*.coffee",
+        ignore: "**/{node_modules,__tests__}/**"
 
       .then (files) -> transformFiles files, options
 

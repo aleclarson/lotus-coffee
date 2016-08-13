@@ -29,7 +29,9 @@ module.exports = function(options) {
         fs.makeDir(module.dest);
       }
       assert(module.src, "Module named '" + module.name + "' must define its `src`!");
-      return module.crawl(module.src + "/**/*.coffee").then(function(files) {
+      return module.crawl(module.src + "/**/*.coffee", {
+        ignore: "**/{node_modules,__tests__}/**"
+      }).then(function(files) {
         return transformFiles(files, options);
       });
     });
