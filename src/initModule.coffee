@@ -1,6 +1,4 @@
 
-isType = require "isType"
-assert = require "assert"
 fs = require "io/sync"
 
 alertEvent = require "./alertEvent"
@@ -16,7 +14,8 @@ module.exports = (mod) ->
 
     fs.makeDir mod.dest if mod.dest
 
-    assert mod.src, "Module named '#{mod.name}' must have its `src` defined!"
+    if not mod.src
+      throw Error "Module named '#{mod.name}' must have its `src` defined!"
 
     mod.watch mod.src + "/**/*.coffee", createListeners()
 

@@ -1,7 +1,6 @@
 
 Promise = require "Promise"
 isType = require "isType"
-assert = require "assert"
 fs = require "io/sync"
 
 alertEvent = require "./alertEvent"
@@ -25,10 +24,11 @@ module.exports = (options) ->
         fs.remove module.dest if options.refresh
         fs.makeDir module.dest
 
-      assert module.src, "Module named '#{module.name}' must define its `src`!"
+      if not module.src
+        throw Error "Module named '#{module.name}' must define its `src`!"
 
       module.crawl module.src + "/**/*.coffee",
-        ignore: "**/{node_modules,__tests__}/**"
+        ignore: "**/{node_modules,__tests__,__mocks__}/**"
 
       .then (files) -> transformFiles files, options
 
