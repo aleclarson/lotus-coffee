@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "js/index",
   "peerDependencies": {
-    "lotus": "3.1.x"
+    "lotus": "3.2.x"
   },
   "dependencies": {
     "Promise": "aleclarson/Promise#1.0.0",
