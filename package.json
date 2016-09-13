@@ -6,7 +6,6 @@
     "lotus": "3.2.x"
   },
   "dependencies": {
-    "Promise": "aleclarson/Promise#1.0.0",
     "coffee-script": "aleclarson/coffee-script#1.10.0",
     "io": "aleclarson/io#2.1.0",
     "isType": "aleclarson/isType#1.0.0",
