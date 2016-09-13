@@ -26,7 +26,7 @@ module.exports = Promise.wrap (file, options) ->
     parentDir = path.join file.module.path, file.dir
     parentDir = path.relative file.module.src, parentDir
     mapPath = path.join file.module.dest, parentDir, "map", file.name + ".map"
-    sourceRoot = path.relative path.dirname(mapPath), path.dirname(file.path)
+    sourceRoot = path.relative file.module.dest, path.dirname(file.path)
     sourceFiles = [file.name + ".coffee"]
     generatedFile = file.name + ".js"
 
