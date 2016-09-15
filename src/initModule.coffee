@@ -10,14 +10,17 @@ module.exports = (mod) ->
 
   .then ->
 
-    try mod.src ?= "src"
+    mod.src ?= "src"
+    mod.dest ?= "js"
 
-    fs.makeDir mod.dest if mod.dest
+    fs.makeDir mod.dest
 
-    if not mod.src
-      throw Error "Module named '#{mod.name}' must have its `src` defined!"
+    if not fs.isDir mod.src
+      log.warn "'mod.src' must be a directory:\n  #{mod.src}"
+      return
 
-    mod.watch mod.src + "/**/*.coffee", createListeners()
+    glob = path.join mod.src, "**", "*.coffee"
+    mod.watch glob, createListeners()
 
 createListeners = ->
 
