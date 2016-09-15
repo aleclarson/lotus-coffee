@@ -2,6 +2,13 @@
   "name": "lotus-coffee",
   "version": "1.0.0",
   "main": "js/index",
+  "plugins": [
+    "lotus-coffee"
+  ],
+  "scripts": {
+    "build": "coffee -cb -o js src",
+    "postinstall": "postinstall-build js 'npm run build'"
+  },
   "peerDependencies": {
     "lotus": "3.2.x"
   },
@@ -9,14 +16,13 @@
     "coffee-script": "aleclarson/coffee-script#1.10.0",
     "io": "aleclarson/io#2.1.0",
     "isType": "aleclarson/isType#1.0.0",
+    "postinstall-build": "0.2.x",
     "printSyntaxError": "aleclarson/printSyntaxError#1.0.0"
   },
-  "lotus": {
-    "plugins": [
-      "lotus-coffee"
-    ],
-    "implicitDependencies": [
-      "path"
-    ]
-  }
+  "devDependencies": {
+    "coffee-script": "1.9.x"
+  },
+  "implicitDependencies": [
+    "path"
+  ]
 }
