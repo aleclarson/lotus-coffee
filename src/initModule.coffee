@@ -1,4 +1,5 @@
 
+path = require "path"
 fs = require "io/sync"
 
 alertEvent = require "./alertEvent"
@@ -19,8 +20,9 @@ module.exports = (mod) ->
       log.warn "'mod.src' must be a directory:\n  #{mod.src}"
       return
 
-    glob = path.join mod.src, "**", "*.coffee"
-    mod.watch glob, createListeners()
+    include = path.join mod.src, "**", "*.coffee"
+    exclude = "**/{node_modules,__tests__,__mocks__}/**"
+    mod.watch {include, exclude}, createListeners()
 
 createListeners = ->
 
