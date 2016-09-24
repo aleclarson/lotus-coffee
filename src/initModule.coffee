@@ -1,9 +1,9 @@
 
+emptyFunction = require "emptyFunction"
 path = require "path"
 fs = require "io/sync"
 
-alertEvent = require "./alertEvent"
-transform = require "./transform"
+transformFiles = require "./transformFiles"
 
 module.exports = (mod) ->
 
@@ -26,52 +26,25 @@ module.exports = (mod) ->
 
 createListeners = ->
 
-  ready: (files) ->
-    # TODO: Transform new files.
+  ready: emptyFunction
 
   add: (file) ->
-    event = "add"
-    alertEvent event, file.path
-    transform file
-    .then ->
-      alertEvent event, file.dest
-      alertEvent event, file.mapDest if file.mapDest
-    .fail (error) ->
-      onTransformError file, error
+    {green} = log.color
+    log.moat 1
+    log.white """
+      File added:
+        #{green file.path}
+    """
+    log.moat 1
+    transformFiles [file]
 
   change: (file) ->
-    event = "change"
-    alertEvent event, file.path
-    transform file
-    .then ->
-      alertEvent event, file.dest
-      alertEvent event, file.mapDest if file.mapDest
-    .fail (error) ->
-      onTransformError file, error
-
+    transformFiles [file]
 
   unlink: (file) ->
 
-    event = "unlink"
-    alertEvent event, file.path
-
     if file.dest
       fs.remove file.dest
-      alertEvent event, file.dest
 
     if file.mapDest
       fs.remove file.mapDest
-      alertEvent event, file.mapDest
-
-onTransformError = (file, error) ->
-
-  if error instanceof SyntaxError
-    return error.print()
-
-  log.moat 1
-  log.red "Error: "
-  log.white lotus.relative file.path
-  log.moat 0
-  log.gray.dim error.stack
-  log.moat 1
-  return
