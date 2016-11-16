@@ -13,10 +13,10 @@
     "lotus": "3.2.x"
   },
   "dependencies": {
-    "coffee-script": "aleclarson/coffee-script#1.10.0",
-    "io": "aleclarson/io#2.1.0",
-    "isType": "aleclarson/isType#1.0.0",
-    "printSyntaxError": "aleclarson/printSyntaxError#1.0.0"
+    "coffee-script": "aleclarson/coffee-script#1.11.1",
+    "io": "aleclarson/io#2.2.0",
+    "isType": "aleclarson/isType#1.0.1",
+    "printSyntaxError": "aleclarson/printSyntaxError#1.1.0"
   },
   "implicitDependencies": [
     "path"
