@@ -1,8 +1,8 @@
 
-# lotus-coffee v1.0.0 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
+# lotus-coffee v1.1.0 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
 
 ```sh
-npm install aleclarson/lotus-coffee#1.0.0
+npm install aleclarson/lotus-coffee#1.1.0
 ```
 
 `lotus-coffee` is a [`lotus`](https://github.com/aleclarson/lotus) plugin for transpiling CoffeeScript files into JavaScript.
