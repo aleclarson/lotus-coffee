@@ -1,15 +1,15 @@
 
-Promise = require "Promise"
 isType = require "isType"
-fs = require "io/sync"
+rimraf = require "rimraf"
+path = require "path"
+fs = require "fsx"
 
 transformFiles = require "./transformFiles"
 
-module.exports = (options) ->
+exports.coffee = (options) ->
 
-  moduleNames = options._
-
-  if not moduleNames.length
+  modNames = options._
+  unless modNames.length
     return transformModule ".", options
 
   makePromise =
@@ -17,27 +17,27 @@ module.exports = (options) ->
     then Promise.chain
     else Promise.all
 
-  makePromise moduleNames, (moduleName) ->
-    transformModule moduleName, options
+  makePromise modNames, (modName) ->
+    transformModule modName, options
 
-transformModule = (moduleName, options) ->
+transformModule = (modName, options) ->
+  mod = lotus.modules.load modName
 
-  lotus.Module.load moduleName
+  mod.load ["config"]
+  .then ->
 
-  .then (module) ->
+    mod.src ?= "src"
 
-    module.load [ "config" ]
+    if mod.dest
+      if options.refresh
+        rimraf.sync mod.dest
+      fs.writeDir mod.dest
 
-    .then ->
+    pattern = path.join mod.src, "**", "*.coffee"
+    ignored = "(.git|node_modules|__tests__|__mocks__)"
 
-      module.src ?= "src"
+    mod.crawl pattern,
+      ignored: path.join "**", ignored, "**"
 
-      if module.dest
-        fs.remove module.dest if options.refresh
-        fs.makeDir module.dest
-
-      module.crawl module.src + "/**/*.coffee",
-        ignore: "**/{node_modules,__tests__,__mocks__}/**"
-
-      .then (files) ->
-        transformFiles files, options
+    .then (files) ->
+      transformFiles files, options

@@ -6,17 +6,20 @@
     "lotus-coffee"
   ],
   "scripts": {
-    "build": "coffee-build -v 1.11.x -b -o js src",
+    "build": "coffee-build -v 1.12.x -b -o js src",
     "postinstall": "npm run build"
   },
   "peerDependencies": {
     "lotus": "3.2.x"
   },
   "dependencies": {
-    "coffee-script": "aleclarson/coffee-script#1.11.1",
-    "io": "aleclarson/io#2.2.0",
+    "assertType": "aleclarson/assertType#2.0.1",
+    "coffee-script": "aleclarson/coffee-script#1.12.4",
+    "emptyFunction": "aleclarson/emptyFunction#1.0.0",
+    "fsx": "aleclarson/fsx#1.2.0",
     "isType": "aleclarson/isType#1.0.1",
-    "printSyntaxError": "aleclarson/printSyntaxError#1.1.0"
+    "printSyntaxError": "aleclarson/printSyntaxError#1.2.0",
+    "rimraf": "^2.6.1"
   },
   "implicitDependencies": [
     "path"

@@ -1,50 +1,42 @@
 
 emptyFunction = require "emptyFunction"
+rimraf = require "rimraf"
 path = require "path"
-fs = require "io/sync"
+fs = require "fsx"
 
 transformFiles = require "./transformFiles"
 
 module.exports = (mod) ->
 
-  mod.load [ "config" ]
-
+  mod.load "config"
   .then ->
 
     mod.src ?= "src"
     mod.dest ?= "js"
 
-    fs.makeDir mod.dest
+    # Create the `dest` directory if needed.
+    fs.writeDir mod.dest
 
-    if not fs.isDir mod.src
+    unless fs.isDir mod.src
       log.warn "'mod.src' must be a directory:\n  #{mod.src}"
-      return
+      return null
 
-    include = path.join mod.src, "**", "*.coffee"
-    exclude = "**/{node_modules,__tests__,__mocks__}/**"
-    mod.watch {include, exclude}, createListeners()
+    pattern = path.join mod.src, "**", "*.coffee"
+    ignored = "(.git|node_modules|__tests__|__mocks__)"
 
-createListeners = ->
+    watcher = mod.watch pattern,
+      ignored: path.join "**", ignored, "**"
 
-  ready: emptyFunction
+    watcher.on "add", (file) ->
+      {green} = log.color
+      log.it "File added: #{green lotus.relative file.path}"
+      transformFiles [file]
 
-  add: (file) ->
-    {green} = log.color
-    log.moat 1
-    log.white """
-      File added:
-        #{green file.path}
-    """
-    log.moat 1
-    transformFiles [file]
+    watcher.on "change", (file) ->
+      transformFiles [file]
 
-  change: (file) ->
-    transformFiles [file]
+    watcher.on "unlink", (file) ->
+      rimraf.sync file.dest if file.dest
+      rimraf.sync file.mapDest if file.mapDest
 
-  unlink: (file) ->
-
-    if file.dest
-      fs.remove file.dest
-
-    if file.mapDest
-      fs.remove file.mapDest
+    return watcher
