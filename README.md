@@ -1,53 +1,22 @@
 
 # lotus-coffee v1.1.0 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
 
+A plugin for [`aleclarson/lotus`](https://github.com/aleclarson/lotus). It compiles *.coffee files.
+
+This version require `lotus` v4.0.0 or higher.
+
+### Command-line API
+
+To expose the `lotus coffee` command, you must include `lotus-coffee` in the "plugins" array in your global `lotus.config.json` file (which resides in $LOTUS_PATH).
+
 ```sh
-npm install aleclarson/lotus-coffee#1.1.0
+lotus coffee module-name
+
+# If already in the `module-name` directory, you can do this:
+lotus coffee .
 ```
 
-`lotus-coffee` is a [`lotus`](https://github.com/aleclarson/lotus) plugin for transpiling CoffeeScript files into JavaScript.
+### Usage with `lotus-watch`
 
-&nbsp;
+For every `package.json` that has `lotus-coffee` in its "plugins" array, the `lotus watch` command will watch & compile any added/changed *.coffee files.
 
-## usage
-
-Inside your module's `lotus-config.coffee`:
-
-```CoffeeScript
-module.exports =
-
-  plugins:
-    coffee: "lotus-coffee"
-
-  coffee:
-    bare: yes
-    sourceMap: yes
-```
-
-Your module **MUST** have a `src` directory.
-
-The generated JavaScript of `src` goes into a `js/src` directory that is automatically created for you.
-
-Your module can also have a `spec` directory, but that's optional.
-
-Just like the `src` directory, the generated JavaScript of `spec` goes into a `js/spec` directory.
-
-&nbsp;
-
-## options
-
-### bare
-
-When equal to `yes`, the transpiled code is **NOT** wrapped with an anonymous function. This removes the encapsulation that is only necessary when concatenating source files.
-
-Default value: `yes`
-
-&nbsp;
-
-### sourceMap
-
-When equal to `yes`, a source map file is created for every transpiled source file. This supports debugging CoffeeScript code rather than the generated JavaScript code.
-
-Default value: `yes`
-
-&nbsp;
