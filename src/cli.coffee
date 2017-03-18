@@ -1,78 +1,43 @@
 
-Promise = require "Promise"
 isType = require "isType"
-fs = require "io/sync"
+rimraf = require "rimraf"
+path = require "path"
+fs = require "fsx"
 
-alertEvent = require "./alertEvent"
-transform = require "./transform"
+transformFiles = require "./transformFiles"
 
-module.exports = (options) ->
+exports.coffee = (options) ->
 
-  moduleName = options._.shift() or "."
+  modNames = options._
+  unless modNames.length
+    return transformModule ".", options
 
-  lotus.Module.load moduleName
+  makePromise =
+    if options.serial
+    then Promise.chain
+    else Promise.all
 
-  .then (module) ->
+  makePromise modNames, (modName) ->
+    transformModule modName, options
 
-    module.load [ "config" ]
+transformModule = (modName, options) ->
+  mod = lotus.modules.load modName
 
-    .then ->
-
-      try module.src ?= "src"
-
-      if module.dest
-        fs.remove module.dest if options.refresh
-        fs.makeDir module.dest
-
-      if not module.src
-        throw Error "Module named '#{module.name}' must define its `src`!"
-
-      module.crawl module.src + "/**/*.coffee",
-        ignore: "**/{node_modules,__tests__,__mocks__}/**"
-
-      .then (files) -> transformFiles files, options
-
-transformFiles = (files, options) ->
-
-  log.moat 1
-  log.green.bold "start: "
-  log.gray.dim files.length + " files"
-  log.moat 1
-
-  startTime = Date.now()
-
-  Promise.chain files, (file) ->
-
-    transform file, options
-
-    .then ->
-      if options.verbose
-        log.moat 1
-        log.cyan "• "
-        log.white lotus.relative file.path
-        log.moat 1
-      else
-        log.moat 0 if 25 <= log.line.length - log.indent
-        log.cyan "•"
-
-    .fail (error) ->
-
-      if error instanceof SyntaxError
-        return error.print()
-
-      if /File must have 'dest' defined before compiling/.test error.message
-        log.moat 1
-        log.yellow "WARN: "
-        log.white lotus.relative file.path
-        log.moat 0
-        log.gray.dim error.message
-        log.moat 1
-        return
-
-      throw error
-
+  mod.load ["config"]
   .then ->
-    log.moat 1
-    log.green.bold "finish: "
-    log.gray.dim (Date.now() - startTime) + " ms"
-    log.moat 1
+
+    mod.src ?= "src"
+
+    if mod.dest
+      if options.refresh
+        rimraf.sync mod.dest
+      fs.writeDir mod.dest
+
+    pattern = path.join mod.src, "**", "*.coffee"
+    ignored = "(.git|node_modules|__tests__|__mocks__)"
+
+    mod.crawl pattern,
+      ignored: path.join "**", ignored, "**"
+
+    .then (files) ->
+      transformFiles files, options

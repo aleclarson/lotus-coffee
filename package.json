@@ -1,24 +1,24 @@
 {
   "name": "lotus-coffee",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "main": "js/index",
-  "peerDependencies": {
-    "lotus": "3.2.x"
+  "plugins": [
+    "lotus-coffee"
+  ],
+  "scripts": {
+    "build": "coffee-build -v 1.12.x -b -o js src",
+    "postinstall": "npm run build"
   },
   "dependencies": {
-    "Promise": "aleclarson/Promise#1.0.0",
-    "coffee-script": "aleclarson/coffee-script#1.10.0",
-    "io": "aleclarson/io#2.1.0",
-    "isType": "aleclarson/isType#1.0.0",
-    "log": "aleclarson/log#1.0.0",
-    "printSyntaxError": "aleclarson/printSyntaxError#1.0.0"
+    "assertType": "aleclarson/assertType#2.0.1",
+    "coffee-script": "aleclarson/coffee-script#1.12.4",
+    "emptyFunction": "aleclarson/emptyFunction#1.0.0",
+    "fsx": "aleclarson/fsx#1.2.0",
+    "isType": "aleclarson/isType#1.0.1",
+    "printSyntaxError": "aleclarson/printSyntaxError#1.2.0",
+    "rimraf": "^2.6.1"
   },
-  "lotus": {
-    "plugins": [
-      "lotus-coffee"
-    ],
-    "implicitDependencies": [
-      "path"
-    ]
-  }
+  "implicitDependencies": [
+    "path"
+  ]
 }
