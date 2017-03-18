@@ -9,9 +9,6 @@
     "build": "coffee-build -v 1.12.x -b -o js src",
     "postinstall": "npm run build"
   },
-  "peerDependencies": {
-    "lotus": "3.2.x"
-  },
   "dependencies": {
     "assertType": "aleclarson/assertType#2.0.1",
     "coffee-script": "aleclarson/coffee-script#1.12.4",
