@@ -1,0 +1,14 @@
+{
+  "name": "lotus-coffee",
+  "version": "2.0.0",
+  "main": "js/index",
+  "dependencies": {
+    "assertType": "aleclarson/assertType#2.0.1",
+    "coffee-script": "aleclarson/coffee-script#1.12.4",
+    "emptyFunction": "aleclarson/emptyFunction#1.0.0",
+    "fsx": "aleclarson/fsx#1.2.0",
+    "isType": "aleclarson/isType#1.0.1",
+    "printSyntaxError": "aleclarson/printSyntaxError#1.2.0",
+    "rimraf": "^2.6.1"
+  }
+}
