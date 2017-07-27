@@ -10,7 +10,7 @@ module.exports = (filePaths, options = {}) ->
   assertType filePaths, Array
   assertType options, Object
 
-  options.maps ?= yes
+  options.maps ?= no
   options.bare ?= yes
 
   makePromise =
