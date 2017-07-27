@@ -10,7 +10,7 @@ module.exports = (filePaths, options = {}) ->
   assertType filePaths, Array
   assertType options, Object
 
-  options.maps ?= yes
+  options.maps ?= no
   options.bare ?= yes
 
   makePromise =
@@ -47,10 +47,10 @@ transformFile = (file, options) ->
   lastModified = new Date
 
   if options.maps
-    parentDir = path.join file.module.path, file.dir
-    parentDir = path.relative file.module.src, parentDir
-    mapPath = path.join file.module.dest, parentDir, "map", file.name + ".map"
-    sourceRoot = path.relative file.module.dest, path.dirname(file.path)
+    sourceDir = path.join file.module.path, file.dir
+    destDir = path.join file.module.dest, path.relative file.module.src, sourceDir
+    mapPath = path.join destDir, "map", file.name + ".map"
+    sourceRoot = path.relative path.dirname(mapPath), path.dirname(file.path)
     sourceFiles = [file.name + ".coffee"]
     generatedFile = file.name + ".js"
 
