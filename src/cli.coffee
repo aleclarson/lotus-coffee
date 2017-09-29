@@ -1,6 +1,5 @@
 
 isType = require "isType"
-rimraf = require "rimraf"
 path = require "path"
 fs = require "fsx"
 
@@ -27,10 +26,11 @@ transformModule = (modName, options) ->
   .then ->
 
     mod.src ?= "src"
+    mod.dest ?= "js"
 
     if mod.dest
       if options.refresh
-        rimraf.sync mod.dest
+        fs.removeDir mod.dest
       fs.writeDir mod.dest
 
     pattern = path.join mod.src, "**", "*.coffee"
