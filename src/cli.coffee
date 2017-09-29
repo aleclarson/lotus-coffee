@@ -4,6 +4,7 @@ path = require "path"
 fs = require "fsx"
 
 transformFiles = require "./transformFiles"
+ignored = require "./ignored"
 
 exports.coffee = (options) ->
 
@@ -33,11 +34,9 @@ transformModule = (modName, options) ->
         fs.removeDir mod.dest
       fs.writeDir mod.dest
 
-    pattern = path.join mod.src, "**", "*.coffee"
-    ignored = "(.git|node_modules|__tests__|__mocks__)"
-
+    pattern = path.relative mod.path, mod.src + "/**/*"
     mod.crawl pattern,
-      ignored: path.join "**", ignored, "**"
+      ignore: ignored options.ignore
 
     .then (files) ->
       transformFiles files, options

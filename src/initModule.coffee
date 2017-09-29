@@ -4,6 +4,7 @@ path = require "path"
 fs = require "fsx"
 
 transformFiles = require "./transformFiles"
+ignored = require "./ignored"
 
 module.exports = (mod) ->
 
@@ -14,11 +15,9 @@ module.exports = (mod) ->
     # Create the `dest` directory if needed.
     fs.writeDir mod.dest ?= "js"
 
-    pattern = path.join mod.src, "**", "*.coffee"
-    ignored = "(.git|node_modules|__tests__|__mocks__)"
-
+    pattern = path.relative mod.path, mod.src + "/**/*"
     watcher = mod.watch pattern,
-      ignored: path.join "**", ignored, "**"
+      ignore: ignored()
 
     watcher.on "add", (file) ->
       {green} = log.color
