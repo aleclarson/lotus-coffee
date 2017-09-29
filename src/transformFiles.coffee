@@ -5,6 +5,8 @@ coffee = require "coffee-script"
 path = require "path"
 fs = require "fsx"
 
+{red} = log.color
+
 module.exports = (files, options = {}) ->
   assertType files, Array
   assertType options, Object
@@ -36,11 +38,11 @@ module.exports = (files, options = {}) ->
   return transformed
 
 transformFile = (file, options) ->
-
   assertType file, lotus.File
 
   unless file.dest
-    throw Error "File must have 'dest' defined before compiling: '#{file.path}'"
+    log.it "File must have 'dest' defined before compiling: #{red file.path}"
+    return
 
   lastModified = new Date
 
@@ -57,7 +59,7 @@ transformFile = (file, options) ->
 
   unless options.quiet
     {green} = log.color
-    log.it "Transforming: #{green lotus.relative file.path}"
+    log.it "Transforming: #{green path.relative path.dirname(file.module.path), file.path}"
 
   try transformed = coffee.compile code, {
     filename: file.path
