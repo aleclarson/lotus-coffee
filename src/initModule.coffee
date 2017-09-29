@@ -1,31 +1,23 @@
 
 emptyFunction = require "emptyFunction"
-rimraf = require "rimraf"
 path = require "path"
 fs = require "fsx"
 
 transformFiles = require "./transformFiles"
+ignored = require "./ignored"
 
 module.exports = (mod) ->
 
   mod.load "config"
   .then ->
-
     mod.src ?= "src"
-    mod.dest ?= "js"
 
     # Create the `dest` directory if needed.
-    fs.writeDir mod.dest
+    fs.writeDir mod.dest ?= "js"
 
-    unless fs.isDir mod.src
-      log.warn "'mod.src' must be a directory:\n  #{mod.src}"
-      return null
-
-    pattern = path.join mod.src, "**", "*.coffee"
-    ignored = "(.git|node_modules|__tests__|__mocks__)"
-
+    pattern = path.relative mod.path, mod.src + "/**/*"
     watcher = mod.watch pattern,
-      ignored: path.join "**", ignored, "**"
+      ignore: ignored()
 
     watcher.on "add", (file) ->
       {green} = log.color
@@ -36,7 +28,7 @@ module.exports = (mod) ->
       transformFiles [file]
 
     watcher.on "unlink", (file) ->
-      rimraf.sync file.dest if file.dest
-      rimraf.sync file.mapDest if file.mapDest
+      fs.removeFile file.dest if file.dest
+      fs.removeFile file.mapDest if file.mapDest
 
     return watcher

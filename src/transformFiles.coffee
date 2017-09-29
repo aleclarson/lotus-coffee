@@ -5,9 +5,10 @@ coffee = require "coffee-script"
 path = require "path"
 fs = require "fsx"
 
-module.exports = (filePaths, options = {}) ->
+{red} = log.color
 
-  assertType filePaths, Array
+module.exports = (files, options = {}) ->
+  assertType files, Array
   assertType options, Object
 
   options.maps ?= no
@@ -21,28 +22,27 @@ module.exports = (filePaths, options = {}) ->
   transformed = []
   failed = []
 
-  for filePath in filePaths
+  for file in files
     try
-      file = transformFile filePath, options
+      file = transformFile file, options
       transformed.push file
     catch error
-      failed.push {filePath, error}
+      failed.push {file, error}
 
   if failed.length and not options.quiet
-    {red} = log.color
-    for {filePath, error} in failed
-      log.it "Failed to compile: #{red lotus.relative filePath}"
+    for {file, error} in failed
+      log.it "Failed to compile: #{red file.path}"
       log.gray.dim error.codeFrame or error.stack
       log.moat 1
 
   return transformed
 
 transformFile = (file, options) ->
-
   assertType file, lotus.File
 
   unless file.dest
-    throw Error "File must have 'dest' defined before compiling: '#{file.path}'"
+    log.it "File must have 'dest' defined before compiling: #{red file.path}"
+    return
 
   lastModified = new Date
 
@@ -59,7 +59,7 @@ transformFile = (file, options) ->
 
   unless options.quiet
     {green} = log.color
-    log.it "Transforming: #{green lotus.relative file.path}"
+    log.it "Transforming: #{green path.relative path.dirname(file.module.path), file.path}"
 
   try transformed = coffee.compile code, {
     filename: file.path
