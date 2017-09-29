@@ -5,9 +5,8 @@ coffee = require "coffee-script"
 path = require "path"
 fs = require "fsx"
 
-module.exports = (filePaths, options = {}) ->
-
-  assertType filePaths, Array
+module.exports = (files, options = {}) ->
+  assertType files, Array
   assertType options, Object
 
   options.maps ?= no
@@ -21,17 +20,16 @@ module.exports = (filePaths, options = {}) ->
   transformed = []
   failed = []
 
-  for filePath in filePaths
+  for file in files
     try
-      file = transformFile filePath, options
+      file = transformFile file, options
       transformed.push file
     catch error
-      failed.push {filePath, error}
+      failed.push {file, error}
 
   if failed.length and not options.quiet
-    {red} = log.color
-    for {filePath, error} in failed
-      log.it "Failed to compile: #{red lotus.relative filePath}"
+    for {file, error} in failed
+      log.it "Failed to compile: #{red file.path}"
       log.gray.dim error.codeFrame or error.stack
       log.moat 1
 
