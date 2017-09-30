@@ -28,7 +28,9 @@ module.exports = (mod) ->
       transformFiles [file]
 
     watcher.on "unlink", (file) ->
-      fs.removeFile file.dest if file.dest
-      fs.removeFile file.mapDest if file.mapDest
+      {dest, mapDest} = file
+      if dest and fs.isFile dest
+        fs.removeFile dest
+        fs.removeFile mapDest if mapDest
 
     return watcher
