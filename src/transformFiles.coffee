@@ -23,6 +23,7 @@ module.exports = (files, options = {}) ->
   failed = []
 
   for file in files
+    continue if file.extension isnt ".coffee"
     try
       file = transformFile file, options
       transformed.push file
