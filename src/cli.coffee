@@ -3,7 +3,8 @@ isType = require "isType"
 path = require "path"
 fs = require "fsx"
 
-transformFiles = require "./transformFiles"
+parseVersion = require "./parseVersion"
+loadVersion = require "./loadVersion"
 ignored = require "./ignored"
 
 exports.coffee = (options) ->
@@ -12,18 +13,13 @@ exports.coffee = (options) ->
   unless modNames.length
     return transformModule ".", options
 
-  makePromise =
-    if options.serial
-    then Promise.chain
-    else Promise.all
-
-  makePromise modNames, (modName) ->
+  Promise.all modNames, (modName) ->
     transformModule modName, options
 
 transformModule = (modName, options) ->
   mod = lotus.modules.load modName
 
-  mod.load ["config"]
+  mod.load "config"
   .then ->
 
     mod.src ?= "src"
@@ -34,9 +30,12 @@ transformModule = (modName, options) ->
         fs.removeDir mod.dest
       fs.writeDir mod.dest
 
+    version = parseVersion mod
+    transform = loadVersion version
+
     pattern = path.relative mod.path, mod.src + "/**/*"
     mod.crawl pattern,
       ignore: ignored options.ignore
 
     .then (files) ->
-      transformFiles files, options
+      transform files, options
