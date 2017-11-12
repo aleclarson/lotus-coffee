@@ -30,6 +30,7 @@ module.exports = (mod) ->
 
     watcher.on "change", transform
     watcher.on "unlink", unlink
+    watcher.on "unlinkDir", unlinkDir
 
     return watcher
 
@@ -42,4 +43,11 @@ unlink = (file) ->
   if dest and fs.isFile dest
     fs.removeFile dest
     fs.removeFile mapDest if mapDest
+    return
+
+unlinkDir = (dir) ->
+  log.it "Directory deleted: #{red relative dir}"
+  dest = dir.module.getDest dir.path
+  if dest and fs.isDir dest
+    fs.removeDir dest
     return
