@@ -1,7 +1,7 @@
 
 path = require "path"
 
-defaults = ["*.swp", "node_modules/**", "__tests__/**", "__mocks__/**"]
+defaults = [".git/**", ".DS_STORE", "*.swp", "node_modules/**", "__tests__/**", "__mocks__/**"]
 
 # Match all parent directories.
 anyParent = (pattern) ->
