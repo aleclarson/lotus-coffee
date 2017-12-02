@@ -1,5 +1,5 @@
 
-# lotus-coffee v2.1.0 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
+# lotus-coffee v2.2.0 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
 
 A plugin for [`aleclarson/lotus`](https://github.com/aleclarson/lotus). It compiles *.coffee files.
 
