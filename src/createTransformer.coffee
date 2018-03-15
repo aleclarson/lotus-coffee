@@ -55,12 +55,24 @@ module.exports = (coffee) ->
     dest.lastModified = lastModified
     return dest
 
+  copyFile = (file, options) ->
+    fs.copy file.path, file.dest
+
+    unless options.quiet
+      log.it "Copied: #{green path.relative path.dirname(file.module.path), file.path}"
+
+    dest = lotus.File file.dest, file.module
+    dest.lastModified = Date.now()
+    return dest
+
   transformFiles = (files, options) ->
     errors = []
 
     for file in files
       assertType file, lotus.File
-      if file.extension is ".coffee"
+      if file.extension isnt ".coffee"
+        copyFile file, options
+      else
         try transformFile file, options
         catch error
           error.filePath = file.path
@@ -81,7 +93,9 @@ module.exports = (coffee) ->
       return errors
 
     assertType file = files, lotus.File
-    if file.extension is ".coffee"
+    if file.extension isnt ".coffee"
+      copyFile file, options
+    else
       try transformFile file, options
       catch error
         error.filePath = file.path
