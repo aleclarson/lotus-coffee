@@ -1,7 +1,7 @@
 
-# lotus-coffee v2.2.0 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
+# lotus-coffee v2.3.0 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
 
-A plugin for [`aleclarson/lotus`](https://github.com/aleclarson/lotus). It compiles *.coffee files.
+A plugin for [**lotus**](https://github.com/aleclarson/lotus) that transpiles CoffeeScript files and copies all other files into a build directory.
 
 This version require `lotus` v4.0.0 or higher.
 
